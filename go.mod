@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
-	github.com/mateothegreat/go-util v0.0.0-20240809224735-5ada17fa8a1f
+	github.com/mateothegreat/go-util v0.0.0-20240809230007-4e4647a819b5
 	github.com/stretchr/testify v1.9.0
 )
 
