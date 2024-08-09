@@ -7,8 +7,8 @@ import (
 	"reflect"
 
 	"github.com/ilyakaznacheev/cleanenv"
-	"github.com/risersh/util/files"
-	"github.com/risersh/util/validation"
+	"github.com/mateothegreat/go-util/files"
+	"github.com/mateothegreat/go-util/validation"
 )
 
 type GetConfigArgs struct {

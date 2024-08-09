@@ -2,6 +2,12 @@
 
 This package provides a simple way to manage configuration for a Go application. It allows you to read configuration from multiple sources and merge them into a single struct.
 
+## Installation
+
+```bash
+go get github.com/mateothegreat/go-config
+```
+
 ## Example
 
 ```go
