@@ -28,16 +28,13 @@ func TestConfigSuite(t *testing.T) {
 
 func (s *TestSuite) TestGetConfig() {
 	var err error
-	s.config, err = GetConfig[CustomConfig](GetConfigArgs{
-		Paths: []string{
-			".env.json",
-			".env.base.yaml",
-			".env.local.yaml",
-		},
-		WalkDepth: 7,
-	})
+	s.config, err = GetConfig[CustomConfig](&[]string{
+		".env.json",
+		".env.base.yaml",
+		".env.local.yaml",
+	}, 7)
 
-	s.NoError(err)
+	s.Require().NoError(err)
 	s.Equal(1, s.config.Base.A)
 	s.Equal("2", s.config.Base.B)
 	s.Equal("4", s.config.Foo.Bar)

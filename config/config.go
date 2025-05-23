@@ -1,3 +1,4 @@
+// Package config provides a way to get and save config files.
 package config
 
 import (
@@ -11,12 +12,8 @@ import (
 	"github.com/mateothegreat/go-util/validation"
 )
 
-type GetConfigArgs struct {
-	Paths     []string
-	WalkDepth int
-}
-
 // GetConfig returns a config of type T.
+//
 // It will merge the base config with the environment config.
 // If the environment config does not exist, it will use the base config.
 //
@@ -26,13 +23,13 @@ type GetConfigArgs struct {
 // Returns:
 //   - A pointer to the config of type T.
 //   - An error if the config could not be found.
-func GetConfig[T any](args GetConfigArgs) (*T, error) {
+func GetConfig[T any](paths *[]string, walkDepth int) (*T, error) {
 	config := new(T)
 
 	// Read and merge all configs from the provided paths.
-	for _, path := range args.Paths {
+	for _, path := range *paths {
 		tempConfig := new(T)
-		configPath := files.WalkFile(path, args.WalkDepth)
+		configPath := files.WalkFile(path, walkDepth)
 		if configPath != "" {
 			// Attempt to read the config from the file.
 			if err := cleanenv.ReadConfig(configPath, tempConfig); err != nil {
