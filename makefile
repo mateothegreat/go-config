@@ -1,5 +1,5 @@
 test:
-	go test -v ./...
+	richgo test -v ./...
 
 test/watch:
-	find . -name '*.go' | entr -cr $(MAKE) test
+	find . -name '*.go' | entr -c $(MAKE) test

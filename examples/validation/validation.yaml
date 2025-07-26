@@ -1,0 +1,12 @@
+host: localhost
+port: 8080
+protocol: http
+database_url: postgres://user:pass@localhost:5432/mydb
+max_conns: 100
+jwt_secret: this-is-a-very-long-jwt-secret-key-that-meets-32-character-minimum
+admin_email: admin@example.com
+enable_debug: true
+log_level: debug
+version: v1.0.0
+api_key: abcd1234efgh5678ijkl9012mnop3456qrst7890
+webhook_secret: webhook-secret-key-123456
