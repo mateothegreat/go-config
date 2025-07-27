@@ -1,0 +1,29 @@
+# Configuration for manual CLI usage example
+
+server:
+  name: "cli-demo-server"
+  host: "localhost"
+  port: 8080
+  environment: "dev"
+  version: "v1.0.0"
+  debug: true
+  metrics: true
+  admin_email: "admin@example.com"
+
+database:
+  host: "localhost"
+  port: 5432
+  database: "cli_demo"
+  username: "demo_user"
+  password: "demo_password123"
+  max_connections: 25
+  timeout: 30
+  ssl_mode: "disable"
+
+api:
+  base_url: "https://api.example.com"
+  api_key: "abcd1234567890abcd1234567890abcd"
+  timeout: 30
+  rate_limit: 1000
+  rate_limit_enabled: true
+  tls_verify: true

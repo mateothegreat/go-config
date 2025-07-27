@@ -1,0 +1,43 @@
+# Application configuration for go:generate example
+
+name: "go-validate-demo"
+environment: "dev"
+version: "v1.0.0"
+
+server:
+  host: "localhost"
+  port: 8080
+  tls: false
+  cert_file: ""
+  key_file: ""
+  read_timeout: 30
+  write_timeout: 30
+  cors:
+    enabled: true
+    origins: ["*"]
+    methods: ["GET", "POST", "PUT", "DELETE"]
+    headers: ["Content-Type", "Authorization"]
+    credentials: false
+
+database:
+  host: "localhost"
+  port: 5432
+  database: "myapp"
+  username: "myuser"
+  password: "mysecretpassword"
+  max_connections: 25
+  max_idle_connections: 5
+  conn_max_lifetime: 3600  # 1 hour
+  ssl_mode: "disable"
+  auto_migrate: true
+
+features:
+  rate_limiting: true
+  caching: true
+  monitoring: true
+  authentication: true
+  authorization: true
+  audit_logging: false
+  experimental_features:
+    new_ui: false
+    beta_api: true

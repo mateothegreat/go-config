@@ -29,9 +29,9 @@ func (ve ValidationErrors) HasErrors() bool {
 	return len(ve) > 0
 }
 
-// AsValidationErrors attempts to convert an error to ValidationErrors.
+// asValidationErrors attempts to convert an error to ValidationErrors.
 // Returns the ValidationErrors and true if successful, nil and false otherwise.
-func AsValidationErrors(err error) (ValidationErrors, bool) {
+func asValidationErrors(err error) (ValidationErrors, bool) {
 	if validationErr, ok := err.(ValidationErrors); ok {
 		return validationErr, true
 	}

@@ -1,0 +1,10 @@
+# Example configuration file
+# Try changing values to test validation
+
+name: "my-awesome-server"
+port: 8080
+host: "localhost"
+email: "admin@example.com"
+log_level: "info"
+debug: false
+version: "v1.2.3"
