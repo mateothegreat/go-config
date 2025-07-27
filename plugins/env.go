@@ -65,17 +65,17 @@ func inferType(value string) any {
 	if boolVal, err := strconv.ParseBool(value); err == nil {
 		return boolVal
 	}
-	
+
 	// Try int
 	if intVal, err := strconv.ParseInt(value, 10, 64); err == nil {
 		return intVal
 	}
-	
+
 	// Try float
 	if floatVal, err := strconv.ParseFloat(value, 64); err == nil {
 		return floatVal
 	}
-	
+
 	// Default to string
 	return value
 }

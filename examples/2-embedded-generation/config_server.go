@@ -9,7 +9,7 @@ type ServerConfig struct {
 	Port int    `validate:"min=1,max=65535" yaml:"port"`
 
 	// TLS settings
-	TLS     bool   `yaml:"tls"`
+	TLS      bool   `yaml:"tls"`
 	CertFile string `yaml:"cert_file"`
 	KeyFile  string `yaml:"key_file"`
 

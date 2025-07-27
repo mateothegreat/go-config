@@ -140,7 +140,7 @@ func TestFieldErrorBuilderChaining(t *testing.T) {
 	assert.True(t, err.HasErrors())
 	errors := err.Errors()
 	assert.Len(t, errors, 1)
-	
+
 	validationErr := errors[0]
 	assert.Equal(t, "email", validationErr.Field)
 	assert.Equal(t, "invalid@", validationErr.Value)
@@ -156,7 +156,7 @@ func TestMultiError(t *testing.T) {
 	}
 
 	multiErr := NewMultiError(fieldErrors)
-	
+
 	assert.True(t, multiErr.HasErrors())
 	assert.Len(t, multiErr.Errors(), 2)
 	assert.Contains(t, multiErr.Error(), "email:")
@@ -165,17 +165,17 @@ func TestMultiError(t *testing.T) {
 
 func TestMultiErrorEmpty(t *testing.T) {
 	multiErr := NewMultiError(nil)
-	
+
 	assert.False(t, multiErr.HasErrors())
 	assert.Equal(t, "", multiErr.Error())
 }
 
 func TestMultiErrorAdd(t *testing.T) {
 	multiErr := NewMultiError(nil)
-	
+
 	err := NewError().Field("test").Format("test error")
 	multiErr.Add("test", err)
-	
+
 	assert.True(t, multiErr.HasErrors())
 	assert.NotNil(t, multiErr.Get("test"))
 	assert.Nil(t, multiErr.Get("nonexistent"))

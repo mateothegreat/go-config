@@ -12,17 +12,17 @@ type ValidatorPlugin interface {
 
 // PluginRegistry manages custom validation plugins
 type PluginRegistry struct {
-	mu        sync.RWMutex
-	plugins   map[string]ValidatorPlugin
-	metadata  map[string]PluginMetadata
+	mu       sync.RWMutex
+	plugins  map[string]ValidatorPlugin
+	metadata map[string]PluginMetadata
 }
 
 // PluginMetadata contains information about a plugin
 type PluginMetadata struct {
-	Name        string
-	Version     string
-	Description string
-	Author      string
+	Name           string
+	Version        string
+	Description    string
+	Author         string
 	SupportedTypes []string
 }
 
@@ -92,7 +92,7 @@ func (r *PluginRegistry) GetMetadata(name string) (PluginMetadata, bool) {
 func (r *PluginRegistry) ListValidators() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.plugins))
 	for name := range r.plugins {
 		names = append(names, name)
@@ -122,7 +122,7 @@ func (r *PluginRegistry) ValidateWithPlugin(pluginName string, field interface{}
 	if !exists {
 		return fmt.Errorf("validator plugin '%s' not found", pluginName)
 	}
-	
+
 	return plugin.Validate(field)
 }
 
@@ -136,11 +136,11 @@ func (v *IPAddressValidator) Validate(field interface{}) error {
 	if !ok {
 		return fmt.Errorf("IP validation requires string input")
 	}
-	
+
 	if !isValidIP(str) {
 		return fmt.Errorf("invalid IP address format")
 	}
-	
+
 	return nil
 }
 
@@ -152,11 +152,11 @@ func (v *UUIDValidator) Validate(field interface{}) error {
 	if !ok {
 		return fmt.Errorf("UUID validation requires string input")
 	}
-	
+
 	if !isValidUUID(str) {
 		return fmt.Errorf("invalid UUID format")
 	}
-	
+
 	return nil
 }
 
@@ -168,11 +168,11 @@ func (v *CreditCardValidator) Validate(field interface{}) error {
 	if !ok {
 		return fmt.Errorf("credit card validation requires string input")
 	}
-	
+
 	if !isValidCreditCard(str) {
 		return fmt.Errorf("invalid credit card number")
 	}
-	
+
 	return nil
 }
 
@@ -184,11 +184,11 @@ func (v *PhoneValidator) Validate(field interface{}) error {
 	if !ok {
 		return fmt.Errorf("phone validation requires string input")
 	}
-	
+
 	if !isValidPhone(str) {
 		return fmt.Errorf("invalid phone number format")
 	}
-	
+
 	return nil
 }
 
@@ -217,34 +217,34 @@ func isValidPhone(phone string) bool {
 // init registers built-in validators
 func init() {
 	RegisterValidatorWithMetadata("ip", &IPAddressValidator{}, PluginMetadata{
-		Name:        "IP Address Validator",
-		Version:     "1.0.0",
-		Description: "Validates IPv4 and IPv6 addresses",
-		Author:      "go-validate",
+		Name:           "IP Address Validator",
+		Version:        "1.0.0",
+		Description:    "Validates IPv4 and IPv6 addresses",
+		Author:         "go-validate",
 		SupportedTypes: []string{"string"},
 	})
-	
+
 	RegisterValidatorWithMetadata("uuid", &UUIDValidator{}, PluginMetadata{
-		Name:        "UUID Validator",
-		Version:     "1.0.0",
-		Description: "Validates UUID format (RFC 4122)",
-		Author:      "go-validate",
+		Name:           "UUID Validator",
+		Version:        "1.0.0",
+		Description:    "Validates UUID format (RFC 4122)",
+		Author:         "go-validate",
 		SupportedTypes: []string{"string"},
 	})
-	
+
 	RegisterValidatorWithMetadata("creditcard", &CreditCardValidator{}, PluginMetadata{
-		Name:        "Credit Card Validator",
-		Version:     "1.0.0",
-		Description: "Validates credit card numbers using Luhn algorithm",
-		Author:      "go-validate",
+		Name:           "Credit Card Validator",
+		Version:        "1.0.0",
+		Description:    "Validates credit card numbers using Luhn algorithm",
+		Author:         "go-validate",
 		SupportedTypes: []string{"string"},
 	})
-	
+
 	RegisterValidatorWithMetadata("phone", &PhoneValidator{}, PluginMetadata{
-		Name:        "Phone Number Validator",
-		Version:     "1.0.0",
-		Description: "Validates phone number formats",
-		Author:      "go-validate",
+		Name:           "Phone Number Validator",
+		Version:        "1.0.0",
+		Description:    "Validates phone number formats",
+		Author:         "go-validate",
 		SupportedTypes: []string{"string"},
 	})
 }

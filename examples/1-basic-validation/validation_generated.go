@@ -4,12 +4,13 @@ package main
 
 import (
 	"regexp"
-	"github.com/mateothegreat/go-config"
+
+	goconfig "github.com/mateothegreat/go-config"
 )
 
 // Pre-compiled regex patterns for validation performance
 var (
-	emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
+	emailRegex   = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 	versionRegex = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
 )
 

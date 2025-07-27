@@ -68,7 +68,7 @@ func reflectionValidate(config interface{}) error {
 
 		// Simulate tag parsing (allocates strings)
 		rules := strings.Split(tag, ",")
-		
+
 		// Simulate validation logic with reflection calls
 		for _, rule := range rules {
 			if strings.HasPrefix(rule, "required") {
@@ -83,7 +83,7 @@ func reflectionValidate(config interface{}) error {
 					}
 				}
 			}
-			
+
 			// More rule checking would happen here...
 			// Each reflection call adds overhead
 		}

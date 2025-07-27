@@ -46,7 +46,7 @@ type APIConfig struct {
 	Timeout int    `validate:"min=1,max=120" yaml:"timeout"`
 
 	// Rate limiting
-	RateLimit    int  `validate:"min=1,max=10000" yaml:"rate_limit"`
+	RateLimit        int  `validate:"min=1,max=10000" yaml:"rate_limit"`
 	RateLimitEnabled bool `yaml:"rate_limit_enabled"`
 
 	// Security

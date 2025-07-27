@@ -5,7 +5,8 @@ import (
 	"strings"
 	"text/template"
 	"time"
-	
+	"unicode"
+
 	"github.com/mateothegreat/go-config/internal/scanner"
 )
 
@@ -26,7 +27,7 @@ func (cg *CodeGenerator) GenerateValidationCode(structInfo scanner.StructInfo) (
 	tmpl := template.New("validation").Funcs(template.FuncMap{
 		"hasRule":        hasRule,
 		"getRuleValue":   getRuleValue,
-		"capitalize":     strings.Title,
+		"capitalize":     capitalize,
 		"lower":          strings.ToLower,
 		"quote":          func(s string) string { return fmt.Sprintf(`"%s"`, s) },
 		"buildValidator": cg.buildValidatorCode,
@@ -61,7 +62,7 @@ func (cg *CodeGenerator) GenerateFileContent(structs []scanner.StructInfo, packa
 	tmpl := template.New("file").Funcs(template.FuncMap{
 		"hasRule":        hasRule,
 		"getRuleValue":   getRuleValue,
-		"capitalize":     strings.Title,
+		"capitalize":     capitalize,
 		"lower":          strings.ToLower,
 		"quote":          func(s string) string { return fmt.Sprintf(`"%s"`, s) },
 		"buildValidator": cg.buildValidatorCode,
@@ -144,6 +145,17 @@ func (cg *CodeGenerator) buildRequiredValidator(field scanner.FieldInfo) string 
 		return goconfig.NewError().Field("%s").Required()
 	}`, field.Name, field.Name, field.Name)
 	}
+}
+
+// capitalize returns a string with the first letter capitalized
+// Replaces deprecated strings.Title for simple title case
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }
 
 // buildMinValidator generates code for minimum value validation
@@ -293,7 +305,7 @@ func (cg *CodeGenerator) buildOneOfValidator(field scanner.FieldInfo, options st
 			conditions = append(conditions, fmt.Sprintf(`s.%s == "%s"`, field.Name, option))
 		}
 		condition := strings.Join(conditions, " || ")
-		
+
 		return fmt.Sprintf(`
 	if !(%s) {
 		return goconfig.NewError().Field("%s").Format("must be one of [%s]")
@@ -308,9 +320,9 @@ func (cg *CodeGenerator) buildRangeValidator(field scanner.FieldInfo, rangeValue
 	if len(parts) != 2 {
 		return fmt.Sprintf("// Invalid range format: %s", rangeValue)
 	}
-	
+
 	min, max := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
-	
+
 	switch {
 	case strings.HasPrefix(field.Type, "int"):
 		return fmt.Sprintf(`
@@ -330,11 +342,13 @@ func (cg *CodeGenerator) buildRangeValidator(field scanner.FieldInfo, rangeValue
 // extractImports extracts required imports for generated code
 func (cg *CodeGenerator) extractImports(structs []scanner.StructInfo) []string {
 	importSet := make(map[string]bool)
-	
+
 	// Always include these imports for validation
+	importSet["fmt"] = true
 	importSet["regexp"] = true
 	importSet["github.com/mateothegreat/go-config"] = true
-	
+	importSet["github.com/mateothegreat/go-config/validate"] = true
+
 	// Check if reflect is needed
 	for _, structInfo := range structs {
 		for _, field := range structInfo.Fields {
@@ -344,12 +358,12 @@ func (cg *CodeGenerator) extractImports(structs []scanner.StructInfo) []string {
 			}
 		}
 	}
-	
+
 	var imports []string
 	for imp := range importSet {
 		imports = append(imports, imp)
 	}
-	
+
 	return imports
 }
 
@@ -357,7 +371,7 @@ func (cg *CodeGenerator) extractImports(structs []scanner.StructInfo) []string {
 func isPrimitiveType(typeName string) bool {
 	primitiveTypes := map[string]bool{
 		"string": true,
-		"int": true, "int8": true, "int16": true, "int32": true, "int64": true,
+		"int":    true, "int8": true, "int16": true, "int32": true, "int64": true,
 		"uint": true, "uint8": true, "uint16": true, "uint32": true, "uint64": true,
 		"float32": true, "float64": true,
 		"bool": true,

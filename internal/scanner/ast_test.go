@@ -99,7 +99,7 @@ func TestScanFile(t *testing.T) {
 func TestScanDirectory(t *testing.T) {
 	// Create temporary directory with Go files
 	tempDir := t.TempDir()
-	
+
 	// Create first file
 	file1Path := filepath.Join(tempDir, "config1.go")
 	err := os.WriteFile(file1Path, []byte(testGoFile), 0644)
@@ -149,8 +149,8 @@ func TestHasValidationAnnotations(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "empty struct",
-			source: `type Config struct {}`,
+			name:     "empty struct",
+			source:   `type Config struct {}`,
 			expected: false,
 		},
 	}
@@ -284,11 +284,11 @@ func TestExtractType(t *testing.T) {
 
 func TestClearCache(t *testing.T) {
 	scanner := NewASTScanner(false)
-	
+
 	// Add something to cache
 	scanner.cache["test"] = &ast.File{}
 	assert.Len(t, scanner.cache, 1)
-	
+
 	// Clear cache
 	scanner.ClearCache()
 	assert.Len(t, scanner.cache, 0)
@@ -337,7 +337,7 @@ func BenchmarkScanFileWithCache(b *testing.B) {
 	require.NoError(b, err)
 
 	scanner := NewASTScanner(false)
-	
+
 	// Prime the cache
 	_, _ = scanner.scanFile(filePath)
 

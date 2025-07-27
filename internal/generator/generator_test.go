@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mateothegreat/go-config/internal/scanner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/mateothegreat/go-config/internal/scanner"
 )
 
 func TestNewGenerator(t *testing.T) {
@@ -72,16 +72,16 @@ func TestNewGenerator(t *testing.T) {
 
 func TestGeneratorFilterStructs(t *testing.T) {
 	gen := NewGenerator(WithStructs("Config", "Settings"))
-	
+
 	structs := []scanner.StructInfo{
 		{Name: "Config"},
 		{Name: "Settings"},
 		{Name: "Database"},
 		{Name: "Server"},
 	}
-	
+
 	filtered := gen.filterStructs(structs)
-	
+
 	assert.Len(t, filtered, 2)
 	assert.Equal(t, "Config", filtered[0].Name)
 	assert.Equal(t, "Settings", filtered[1].Name)
@@ -90,12 +90,12 @@ func TestGeneratorFilterStructs(t *testing.T) {
 func TestGeneratorEnsureOutputDir(t *testing.T) {
 	tempDir := t.TempDir()
 	outputDir := filepath.Join(tempDir, "output", "nested")
-	
+
 	gen := NewGenerator(WithOutputDir(outputDir))
-	
+
 	err := gen.ensureOutputDir()
 	require.NoError(t, err)
-	
+
 	// Check that directory was created
 	info, err := os.Stat(outputDir)
 	require.NoError(t, err)
@@ -104,14 +104,14 @@ func TestGeneratorEnsureOutputDir(t *testing.T) {
 
 func TestGeneratorEnsureOutputDirError(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create a file instead of directory
 	filePath := filepath.Join(tempDir, "notadir")
 	err := os.WriteFile(filePath, []byte("test"), 0644)
 	require.NoError(t, err)
-	
+
 	gen := NewGenerator(WithOutputDir(filePath))
-	
+
 	err = gen.ensureOutputDir()
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "exists but is not a directory")
@@ -119,7 +119,7 @@ func TestGeneratorEnsureOutputDirError(t *testing.T) {
 
 func TestGenerateSingleFile(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	structs := []scanner.StructInfo{
 		{
 			Name:        "TestConfig",
@@ -144,20 +144,20 @@ func TestGenerateSingleFile(t *testing.T) {
 			},
 		},
 	}
-	
+
 	gen := NewGenerator(
 		WithOutputDir(tempDir),
 		WithVerbose(false),
 	)
-	
+
 	err := gen.generateSingleFile(structs, "test")
 	require.NoError(t, err)
-	
+
 	// Check that file was created
 	outputPath := filepath.Join(tempDir, "validation_generated.go")
 	content, err := os.ReadFile(outputPath)
 	require.NoError(t, err)
-	
+
 	contentStr := string(content)
 	assert.Contains(t, contentStr, "package test")
 	assert.Contains(t, contentStr, "func (s *TestConfig) Validate() error")
@@ -180,12 +180,12 @@ func TestGenerateDryRun(t *testing.T) {
 			},
 		},
 	}
-	
+
 	gen := NewGenerator(
 		WithDryRun(true),
 		WithVerbose(false),
 	)
-	
+
 	// Dry run should not create any files
 	err := gen.generateSingleFile(structs, "test")
 	require.NoError(t, err)
@@ -193,7 +193,7 @@ func TestGenerateDryRun(t *testing.T) {
 
 func TestGenerateMultipleFiles(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	structs := []scanner.StructInfo{
 		{
 			Name:        "ConfigA",
@@ -210,27 +210,27 @@ func TestGenerateMultipleFiles(t *testing.T) {
 			},
 		},
 	}
-	
+
 	gen := NewGenerator(
 		WithOutputDir(tempDir),
 		WithMulti(true),
 		WithVerbose(false),
 	)
-	
+
 	err := gen.generateMultipleFiles(structs, "test")
 	require.NoError(t, err)
-	
+
 	// Check that multiple files were created
 	files, err := os.ReadDir(tempDir)
 	require.NoError(t, err)
-	
+
 	var goFiles []string
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".go") {
 			goFiles = append(goFiles, file.Name())
 		}
 	}
-	
+
 	assert.Len(t, goFiles, 2)
 	assert.Contains(t, goFiles, "configa_validation_generated.go")
 	assert.Contains(t, goFiles, "configb_validation_generated.go")

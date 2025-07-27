@@ -11,9 +11,9 @@ import (
 
 // Generator is the main orchestrator for code generation
 type Generator struct {
-	config    GeneratorConfig
-	scanner   *scanner.ASTScanner
-	codegen   *CodeGenerator
+	config  GeneratorConfig
+	scanner *scanner.ASTScanner
+	codegen *CodeGenerator
 }
 
 // NewGenerator creates a new generator with the given configuration
@@ -170,7 +170,7 @@ func (g *Generator) generateSingleFile(structs []scanner.StructInfo, packageName
 	}
 
 	outputPath := filepath.Join(g.config.OutputDir, "validation_generated.go")
-	
+
 	if err := g.ensureOutputDir(); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}

@@ -2,12 +2,12 @@ package scanner
 
 // StructInfo contains metadata about a struct to be validated
 type StructInfo struct {
-	Name         string
-	PackageName  string
-	Fields       []FieldInfo
-	FilePath     string
-	ImportPaths  []string
-	Comments     string
+	Name        string
+	PackageName string
+	Fields      []FieldInfo
+	FilePath    string
+	ImportPaths []string
+	Comments    string
 }
 
 // FieldInfo contains metadata about a struct field

@@ -2,14 +2,14 @@ package plugins
 
 import "context"
 
-// Plugin is a plugin.
-type Plugin interface {
+// LegacyPlugin is a legacy plugin interface (deprecated - use Plugin from types.go)
+type LegacyPlugin interface {
 	Load(ctx context.Context) (map[string]any, error)
 	Name() string
 }
 
-// ReloadablePlugin is a plugin that can be reloaded.
-type ReloadablePlugin interface {
-	Plugin
+// LegacyReloadablePlugin is a legacy reloadable plugin interface
+type LegacyReloadablePlugin interface {
+	LegacyPlugin
 	Watch(ctx context.Context, onChange func())
 }

@@ -1,55 +1,155 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"os"
 
-	"gopkg.in/yaml.v3"
+	goconfig "github.com/mateothegreat/go-config"
+	"github.com/mateothegreat/go-config/plugins/sources"
 )
 
 func main() {
-	fmt.Println("🔧 Manual CLI Usage Example")
-	fmt.Println("============================")
+	fmt.Println("🔧 CLI Usage Example - Unified Architecture")
+	fmt.Println("===========================================")
 	fmt.Println()
 
-	// Show CLI commands used to generate validation
+	// Show CLI commands for code generation
 	showCLICommands()
 
-	// Load and validate configuration
-	config, err := loadConfig("config.yaml")
+	// Method 1: Load configuration using unified builder
+	fmt.Println("📋 Method 1: Unified Configuration Loading")
+	config1 := &Config{}
+
+	err := goconfig.LoadWithPlugins(
+		goconfig.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
+		goconfig.FromEnv(sources.EnvOpts{Prefix: "APP"}),
+	).WithValidationStrategy(goconfig.StrategyAuto).Build(config1)
+
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		fmt.Println("❌ Configuration loading/validation failed!")
+		handleValidationError(err)
+		return
 	}
 
-	// Validate server config
-	fmt.Println("🔍 Validating server configuration...")
-	if err := config.Server.Validate(); err != nil {
-		fmt.Printf("❌ Server validation failed: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("✅ Server configuration valid")
+	fmt.Println("✅ Configuration loaded and validated successfully!")
 
-	// Validate database config
-	fmt.Println("🔍 Validating database configuration...")
-	if err := config.Database.Validate(); err != nil {
-		fmt.Printf("❌ Database validation failed: %v\n", err)
-		os.Exit(1)
-	}
-	fmt.Println("✅ Database configuration valid")
+	// Method 2: Individual component validation
+	fmt.Println("\n📋 Method 2: Individual Component Validation")
+	config2 := &Config{}
 
-	// Validate API config
-	fmt.Println("🔍 Validating API configuration...")
-	if err := config.API.Validate(); err != nil {
-		fmt.Printf("❌ API validation failed: %v\n", err)
-		os.Exit(1)
+	loader := goconfig.NewLoader(config2)
+
+	// Add YAML source
+	yamlPlugin, err := goconfig.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
+	if err != nil {
+		log.Fatalf("Failed to create YAML plugin: %v", err)
 	}
-	fmt.Println("✅ API configuration valid")
+	loader.Use(yamlPlugin)
+
+	// Set defaults for missing configuration
+	defaults := &Config{
+		Server: ServerConfig{
+			Host:        "localhost",
+			Environment: "dev",
+			Debug:       true,
+			Metrics:     false,
+		},
+		Database: DatabaseConfig{
+			Host:           "localhost",
+			Port:           5432,
+			MaxConnections: 10,
+			Timeout:        30,
+			SSLMode:        "disable",
+		},
+		API: APIConfig{
+			Timeout:          30,
+			RateLimit:        1000,
+			RateLimitEnabled: true,
+			TLSVerify:        true,
+		},
+	}
+	loader.SetDefaults(defaults)
+
+	if err := loader.Load(context.Background()); err != nil {
+		fmt.Println("❌ Configuration loading/validation failed!")
+		handleValidationError(err)
+		return
+	}
+
+	// Test validation strategies for each component
+	fmt.Println("🔍 Testing validation strategies...")
+
+	// Check server config validation
+	if goconfig.HasGeneratedValidator(&config2.Server) {
+		fmt.Println("✅ ServerConfig: Using generated validation")
+		if err := goconfig.ValidateWithGenerated(&config2.Server); err != nil {
+			fmt.Printf("❌ Server validation failed: %v\n", err)
+		} else {
+			fmt.Println("✅ Server validation passed")
+		}
+	} else {
+		fmt.Println("ℹ️  ServerConfig: Using reflection-based validation")
+		validator := goconfig.NewValidator()
+		if err := validator.Validate(&config2.Server); err != nil {
+			fmt.Printf("❌ Server validation failed: %v\n", err)
+		} else {
+			fmt.Println("✅ Server validation passed")
+		}
+	}
+
+	// Check database config validation
+	if goconfig.HasGeneratedValidator(&config2.Database) {
+		fmt.Println("✅ DatabaseConfig: Using generated validation")
+		if err := goconfig.ValidateWithGenerated(&config2.Database); err != nil {
+			fmt.Printf("❌ Database validation failed: %v\n", err)
+		} else {
+			fmt.Println("✅ Database validation passed")
+		}
+	} else {
+		fmt.Println("ℹ️  DatabaseConfig: Using reflection-based validation")
+		validator := goconfig.NewValidator()
+		if err := validator.Validate(&config2.Database); err != nil {
+			fmt.Printf("❌ Database validation failed: %v\n", err)
+		} else {
+			fmt.Println("✅ Database validation passed")
+		}
+	}
+
+	// Check API config validation
+	if goconfig.HasGeneratedValidator(&config2.API) {
+		fmt.Println("✅ APIConfig: Using generated validation")
+		if err := goconfig.ValidateWithGenerated(&config2.API); err != nil {
+			fmt.Printf("❌ API validation failed: %v\n", err)
+		} else {
+			fmt.Println("✅ API validation passed")
+		}
+	} else {
+		fmt.Println("ℹ️  APIConfig: Using reflection-based validation")
+		validator := goconfig.NewValidator()
+		if err := validator.Validate(&config2.API); err != nil {
+			fmt.Printf("❌ API validation failed: %v\n", err)
+		} else {
+			fmt.Println("✅ API validation passed")
+		}
+	}
 
 	fmt.Println()
 	fmt.Println("🎉 All configurations validated successfully!")
 	fmt.Printf("🚀 Server '%s' ready on %s:%d (env: %s)\n",
-		config.Server.Name, config.Server.Host, config.Server.Port, config.Server.Environment)
+		config2.Server.Name, config2.Server.Host, config2.Server.Port, config2.Server.Environment)
+
+	// Show configuration sources and final merged data
+	fmt.Println("\n🔍 Configuration sources used:")
+	for _, source := range loader.Sources() {
+		fmt.Printf("  - %s\n", source)
+	}
+
+	fmt.Println("\n📊 Final merged configuration keys:")
+	data := loader.Inspect()
+	for key := range data {
+		fmt.Printf("  - %s\n", key)
+	}
 }
 
 // Config represents the complete application configuration
@@ -59,18 +159,30 @@ type Config struct {
 	API      APIConfig      `yaml:"api"`
 }
 
-func loadConfig(filename string) (*Config, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
+// handleValidationError provides comprehensive error handling
+func handleValidationError(err error) {
+	// Check if it's a correlated error with suggestions
+	if correlatedErr, ok := err.(*goconfig.CorrelatedError); ok {
+		fmt.Printf("Error: %s\n", correlatedErr.Error())
+
+		fmt.Println("\n💡 Suggestions:")
+		for _, suggestion := range correlatedErr.GetSuggestions() {
+			fmt.Printf("  - %s\n", suggestion)
+		}
+		return
 	}
 
-	var config Config
-	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+	// Check if it's validation errors
+	if validationErrs, ok := goconfig.AsValidationErrors(err); ok {
+		fmt.Println("Validation errors found:")
+		for _, validationErr := range validationErrs.Errors() {
+			fmt.Printf("  - %s\n", validationErr.Error())
+		}
+		return
 	}
 
-	return &config, nil
+	// Generic error
+	fmt.Printf("Error: %v\n", err)
 }
 
 func showCLICommands() {

@@ -35,7 +35,7 @@ func (s *ASTScanner) ScanDirectory(dir string) ([]StructInfo, error) {
 	}
 
 	var allStructs []StructInfo
-	
+
 	if s.verbose {
 		fmt.Printf("🔍 Found %d Go files to scan:\n", len(goFiles))
 		for _, file := range goFiles {
@@ -118,9 +118,9 @@ func (s *ASTScanner) hasValidationAnnotations(structType *ast.StructType) bool {
 func (s *ASTScanner) hasGoGenerateDirective(file *ast.File, structName string) bool {
 	for _, commentGroup := range file.Comments {
 		for _, comment := range commentGroup.List {
-			if strings.Contains(comment.Text, "//go:generate") && 
-			   strings.Contains(comment.Text, "go-validate") && 
-			   strings.Contains(comment.Text, structName) {
+			if strings.Contains(comment.Text, "//go:generate") &&
+				strings.Contains(comment.Text, "go-validate") &&
+				strings.Contains(comment.Text, structName) {
 				return true
 			}
 		}
@@ -190,12 +190,12 @@ func (s *ASTScanner) parseStructTags(fieldInfo *FieldInfo) {
 	}
 
 	tag := reflect.StructTag(fieldInfo.Tag)
-	
+
 	// Extract common tags
 	fieldInfo.JSONTag = tag.Get("json")
 	fieldInfo.YAMLTag = tag.Get("yaml")
 	fieldInfo.ConfigTag = tag.Get("config")
-	
+
 	// Parse validation rules
 	validateTag := tag.Get("validate")
 	if validateTag != "" {
@@ -255,14 +255,14 @@ func (s *ASTScanner) extractType(expr ast.Expr) string {
 // extractImports extracts import paths from the AST
 func (s *ASTScanner) extractImports(node *ast.File) []string {
 	var imports []string
-	
+
 	for _, imp := range node.Imports {
 		if imp.Path != nil {
 			importPath := strings.Trim(imp.Path.Value, "\"")
 			imports = append(imports, importPath)
 		}
 	}
-	
+
 	return imports
 }
 
@@ -271,7 +271,7 @@ func (s *ASTScanner) extractComments(commentGroup *ast.CommentGroup) string {
 	if commentGroup == nil {
 		return ""
 	}
-	
+
 	var comments []string
 	for _, comment := range commentGroup.List {
 		text := strings.TrimPrefix(comment.Text, "//")
@@ -282,7 +282,7 @@ func (s *ASTScanner) extractComments(commentGroup *ast.CommentGroup) string {
 			comments = append(comments, text)
 		}
 	}
-	
+
 	return strings.Join(comments, " ")
 }
 
@@ -298,11 +298,11 @@ func (s *ASTScanner) findGoFiles(dir string) ([]string, error) {
 		// Skip vendor, hidden directories, and common build directories (but never skip the root directory)
 		if d.IsDir() && path != dir {
 			name := d.Name()
-			if strings.HasPrefix(name, ".") || 
-			   name == "vendor" || 
-			   name == "node_modules" || 
-			   name == "target" ||
-			   name == "dist" {
+			if strings.HasPrefix(name, ".") ||
+				name == "vendor" ||
+				name == "node_modules" ||
+				name == "target" ||
+				name == "dist" {
 				if s.verbose {
 					fmt.Printf("🚫 Skipping directory: %s\n", path)
 				}

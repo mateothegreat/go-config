@@ -63,11 +63,11 @@ func (fe *FluentError) Error() string {
 	if len(fe.errors) == 0 {
 		return ""
 	}
-	
+
 	if len(fe.errors) == 1 {
 		return fe.errors[0].Error()
 	}
-	
+
 	var messages []string
 	for _, err := range fe.errors {
 		messages = append(messages, err.Error())
@@ -152,7 +152,7 @@ func (me *MultiError) Error() string {
 	if len(me.errors) == 0 {
 		return ""
 	}
-	
+
 	var messages []string
 	for field, err := range me.errors {
 		messages = append(messages, fmt.Sprintf("%s: %s", field, err.Error()))
