@@ -1,4 +1,4 @@
-package validate
+package validation
 
 import (
 	"fmt"
@@ -14,34 +14,14 @@ type generatedValidatorRegistry struct {
 	validators map[string]func(any) error
 }
 
-// NewGeneratedValidatorRegistry creates a new generated validator registry
-func NewGeneratedValidatorRegistry() GeneratedValidatorRegistry {
-	return &generatedValidatorRegistry{
-		validators: make(map[string]func(any) error),
-	}
-}
-
 // Global generated validator registry
-var globalGeneratedRegistry = NewGeneratedValidatorRegistry()
-
-// RegisterGeneratedValidator registers a generated validation function globally
-func RegisterGeneratedValidator(structName string, validator func(any) error) {
-	globalGeneratedRegistry.RegisterGeneratedValidator(structName, validator)
+var globalGeneratedRegistry = &generatedValidatorRegistry{
+	validators: make(map[string]func(any) error),
 }
 
 // GetGeneratedValidator retrieves a generated validator globally
 func GetGeneratedValidator(structName string) (func(any) error, bool) {
 	return globalGeneratedRegistry.GetGeneratedValidator(structName)
-}
-
-// HasGeneratedValidator checks if a struct has a generated validator globally
-func HasGeneratedValidator(data any) bool {
-	return globalGeneratedRegistry.HasGeneratedValidator(data)
-}
-
-// ValidateWithGenerated validates using generated validator globally
-func ValidateWithGenerated(data any) error {
-	return globalGeneratedRegistry.ValidateWithGenerated(data)
 }
 
 func (r *generatedValidatorRegistry) RegisterGeneratedValidator(structName string, validator func(any) error) {

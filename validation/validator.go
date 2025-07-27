@@ -1,4 +1,4 @@
-package validate
+package validation
 
 import (
 	"fmt"
@@ -32,11 +32,6 @@ func NewUnifiedValidator(config ValidatorConfig) *UnifiedValidator {
 		reflectionRegistry: registry,
 		fastValidator:      NewFastValidator(),
 	}
-}
-
-// NewValidator creates a validator with default configuration
-func NewValidator() *UnifiedValidator {
-	return NewUnifiedValidator(DefaultValidatorConfig())
 }
 
 // Validate validates the given data using the most appropriate strategy
@@ -372,6 +367,43 @@ func registerBuiltInValidators(registry ValidatorRegistry) {
 
 		if numVal > maxVal {
 			return fmt.Errorf("field '%s' must be at most %g", fieldName, maxVal)
+		}
+		return nil
+	})
+
+	// OneOf validator
+	registry.RegisterValidator("oneof", func(fieldName string, value reflect.Value, rule string) error {
+		if value.Kind() != reflect.String {
+			return fmt.Errorf("oneof validation only supports string fields")
+		}
+
+		stringVal := value.String()
+		options := strings.Split(rule, "|")
+		
+		for _, option := range options {
+			option = strings.TrimSpace(option)
+			if stringVal == option {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("field '%s' must be one of [%s]", fieldName, strings.Join(options, ", "))
+	})
+
+	// Regex validator
+	registry.RegisterValidator("regex", func(fieldName string, value reflect.Value, rule string) error {
+		if value.Kind() != reflect.String {
+			return fmt.Errorf("regex validation only supports string fields")
+		}
+
+		stringVal := value.String()
+		regex, err := regexp.Compile(rule)
+		if err != nil {
+			return fmt.Errorf("invalid regex pattern '%s' for field '%s': %v", rule, fieldName, err)
+		}
+
+		if !regex.MatchString(stringVal) {
+			return fmt.Errorf("field '%s' does not match pattern '%s'", fieldName, rule)
 		}
 		return nil
 	})

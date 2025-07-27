@@ -7,7 +7,7 @@ import (
 
 	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins"
-	"github.com/mateothegreat/go-config/validate"
+	"github.com/mateothegreat/go-config/validation"
 )
 
 // ConfigLoader provides a fluent interface for loading and validating configuration
@@ -17,8 +17,8 @@ type ConfigLoader struct {
 	config           LoaderConfig
 	sourceManager    SourceManager
 	hydrator         Hydrator
-	validator        validate.Validator
-	defaultValidator validate.Validator
+	validator        validation.Validator
+	defaultValidator validation.Validator
 	errorCorrelator  *errors.ErrorCorrelator
 	merged           map[string]any
 	errors           []error
@@ -32,7 +32,7 @@ func NewConfigLoader(target any) Loader {
 		config:           config,
 		sourceManager:    NewSourceManager(),
 		hydrator:         NewHydrator(config.HydrationStrategy),
-		defaultValidator: validate.NewValidator(),
+		defaultValidator: validation.NewValidator(),
 		errorCorrelator:  errors.NewErrorCorrelator(),
 		merged:           make(map[string]any),
 		errors:           make([]error, 0),
@@ -46,7 +46,7 @@ func NewConfigLoaderWithConfig(target any, config LoaderConfig) Loader {
 		config:           config,
 		sourceManager:    NewSourceManager(),
 		hydrator:         NewHydrator(config.HydrationStrategy),
-		defaultValidator: validate.NewValidator(),
+		defaultValidator: validation.NewValidator(),
 		errorCorrelator:  errors.NewErrorCorrelator(),
 		merged:           make(map[string]any),
 		errors:           make([]error, 0),
@@ -84,7 +84,7 @@ func (cl *ConfigLoader) SetDefaults(defaults any) Loader {
 }
 
 // SetValidator sets a custom validator
-func (cl *ConfigLoader) SetValidator(validator validate.Validator) Loader {
+func (cl *ConfigLoader) SetValidator(validator validation.Validator) Loader {
 	cl.mu.Lock()
 	defer cl.mu.Unlock()
 	cl.validator = validator
@@ -189,27 +189,27 @@ func (cl *ConfigLoader) Errors() []error {
 }
 
 // getValidator returns the appropriate validator with auto-detection
-func (cl *ConfigLoader) getValidator() validate.Validator {
+func (cl *ConfigLoader) getValidator() validation.Validator {
 	if cl.validator != nil {
 		return cl.validator
 	}
 
 	// Auto-detect validation strategy based on the target struct
-	detector := validate.NewValidationDetector(validate.ValidatorConfig{
+	detector := validation.NewValidationDetector(validation.ValidatorConfig{
 		Strategy: cl.config.ValidationStrategy,
 	})
 
 	info := detector.GetValidationInfo(cl.target)
 
 	// If generated validation is available, prioritize it
-	if info.HasGeneratedCode && (cl.config.ValidationStrategy == validate.StrategyAuto || cl.config.ValidationStrategy == validate.StrategyGenerated) {
+	if info.HasGeneratedCode && (cl.config.ValidationStrategy == validation.StrategyAuto || cl.config.ValidationStrategy == validation.StrategyGenerated) {
 		return &GeneratedValidatorAdapter{target: cl.target}
 	}
 
 	// Configure unified validator with detected strategy
-	config := validate.DefaultValidatorConfig()
+	config := validation.DefaultValidatorConfig()
 	config.Strategy = info.RecommendedStrategy
-	return validate.NewUnifiedValidator(config)
+	return validation.NewUnifiedValidator(config)
 }
 
 // GeneratedValidatorAdapter adapts generated validation to the Validator interface
@@ -220,12 +220,12 @@ type GeneratedValidatorAdapter struct {
 // Validate implements the Validator interface using generated validation
 func (gva *GeneratedValidatorAdapter) Validate(data any) error {
 	// Check if the target implements GeneratedValidator
-	if gv, ok := gva.target.(validate.GeneratedValidator); ok {
+	if gv, ok := gva.target.(validation.GeneratedValidator); ok {
 		return gv.Validate()
 	}
 
 	// Fall back to registry lookup
-	return validate.ValidateWithGenerated(gva.target)
+	return validation.ValidateWithGenerated(gva.target)
 }
 
 // SourceManager implementation

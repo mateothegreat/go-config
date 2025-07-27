@@ -347,7 +347,7 @@ func (cg *CodeGenerator) extractImports(structs []scanner.StructInfo) []string {
 	importSet["fmt"] = true
 	importSet["regexp"] = true
 	importSet["github.com/mateothegreat/go-config"] = true
-	importSet["github.com/mateothegreat/go-config/validate"] = true
+	importSet["github.com/mateothegreat/go-config/validation"] = true
 
 	// Check if reflect is needed
 	for _, structInfo := range structs {

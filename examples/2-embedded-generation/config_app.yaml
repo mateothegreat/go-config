@@ -27,7 +27,7 @@ database:
   password: "mysecretpassword"
   max_connections: 25
   max_idle_connections: 5
-  conn_max_lifetime: 3600  # 1 hour
+  conn_max_lifetime: 3600 # 1 hour
   ssl_mode: "disable"
   auto_migrate: true
 

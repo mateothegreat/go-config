@@ -5,14 +5,14 @@ import (
 
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/validate"
+	"github.com/mateothegreat/go-config/validation"
 )
 
 // FluentBuilder provides a fluent interface for configuration building
 type FluentBuilder struct {
 	loader        Loader
 	config        LoaderConfig
-	validator     validate.Validator
+	validator     validation.Validator
 	pluginLoaders []PluginLoader
 }
 
@@ -44,13 +44,13 @@ func (fb *FluentBuilder) WithDefaults(defaults any) Builder {
 }
 
 // WithValidator sets a custom validator
-func (fb *FluentBuilder) WithValidator(validator validate.Validator) Builder {
+func (fb *FluentBuilder) WithValidator(validator validation.Validator) Builder {
 	fb.validator = validator
 	return fb
 }
 
 // WithValidationStrategy sets the validation strategy
-func (fb *FluentBuilder) WithValidationStrategy(strategy validate.ValidationStrategy) Builder {
+func (fb *FluentBuilder) WithValidationStrategy(strategy validation.ValidationStrategy) Builder {
 	fb.config.ValidationStrategy = strategy
 	return fb
 }
@@ -107,7 +107,7 @@ type PluginBuilder struct {
 	pluginLoaders []PluginLoader
 	config        LoaderConfig
 	defaults      any
-	validator     validate.Validator
+	validator     validation.Validator
 }
 
 // LoadWithPlugins creates a new config builder that accepts plugin constructor functions
@@ -125,21 +125,21 @@ func (pb *PluginBuilder) WithDefaults(def any) *PluginBuilder {
 }
 
 // WithValidator sets the validator for the config
-func (pb *PluginBuilder) WithValidator(v validate.Validator) *PluginBuilder {
+func (pb *PluginBuilder) WithValidator(v validation.Validator) *PluginBuilder {
 	pb.validator = v
 	return pb
 }
 
 // WithValidationStrategy sets the validation strategy
-func (pb *PluginBuilder) WithValidationStrategy(strategy validate.ValidationStrategy) *PluginBuilder {
+func (pb *PluginBuilder) WithValidationStrategy(strategy validation.ValidationStrategy) *PluginBuilder {
 	pb.config.ValidationStrategy = strategy
 	return pb
 }
 
 // WithStructValidator sets up struct tag-based validation with optional custom validators
-func (pb *PluginBuilder) WithStructValidator(customValidators ...func(*validate.UnifiedValidator)) *PluginBuilder {
-	config := validate.DefaultValidatorConfig()
-	validator := validate.NewUnifiedValidator(config)
+func (pb *PluginBuilder) WithStructValidator(customValidators ...func(*validation.UnifiedValidator)) *PluginBuilder {
+	config := validation.DefaultValidatorConfig()
+	validator := validation.NewUnifiedValidator(config)
 	for _, fn := range customValidators {
 		fn(validator)
 	}
@@ -158,7 +158,7 @@ func (pb *PluginBuilder) Build(target any) error {
 
 	// Auto-detect validation strategy if no validator is set
 	if pb.validator == nil {
-		detector := validate.NewValidationDetector(validate.ValidatorConfig{
+		detector := validation.NewValidationDetector(validation.ValidatorConfig{
 			Strategy: pb.config.ValidationStrategy,
 		})
 
@@ -170,9 +170,9 @@ func (pb *PluginBuilder) Build(target any) error {
 			pb.validator = nil
 		} else {
 			// Use unified validator with auto-detection
-			validatorConfig := validate.DefaultValidatorConfig()
+			validatorConfig := validation.DefaultValidatorConfig()
 			validatorConfig.Strategy = pb.config.ValidationStrategy
-			pb.validator = validate.NewUnifiedValidator(validatorConfig)
+			pb.validator = validation.NewUnifiedValidator(validatorConfig)
 		}
 	}
 
@@ -203,7 +203,7 @@ type BuilderSource struct {
 type BuilderConfig struct {
 	sources   []BuilderSource
 	defaults  any
-	validator validate.Validator
+	validator validation.Validator
 }
 
 // Source creates a new source builder (legacy)
@@ -223,7 +223,7 @@ func (cb *BuilderConfig) WithDefaults(def any) *BuilderConfig {
 }
 
 // WithValidator sets the validator for the config (legacy)
-func (cb *BuilderConfig) WithValidator(v validate.Validator) *BuilderConfig {
+func (cb *BuilderConfig) WithValidator(v validation.Validator) *BuilderConfig {
 	cb.validator = v
 	return cb
 }

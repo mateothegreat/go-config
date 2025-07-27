@@ -1,0 +1,3 @@
+name: "go-validate-demo"
+environment: "dev"
+version: "v1.0.0"

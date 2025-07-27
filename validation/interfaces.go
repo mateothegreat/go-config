@@ -1,5 +1,5 @@
 // Package validate provides validation interfaces and implementations
-package validate
+package validation
 
 import (
 	"reflect"
@@ -63,16 +63,6 @@ type ValidatorConfig struct {
 	AllowUnknownTags bool
 	FailFast         bool
 	CollectAllErrors bool
-}
-
-// DefaultValidatorConfig returns the default validator configuration
-func DefaultValidatorConfig() ValidatorConfig {
-	return ValidatorConfig{
-		Strategy:         StrategyAuto,
-		AllowUnknownTags: true,
-		FailFast:         false,
-		CollectAllErrors: true,
-	}
 }
 
 // ErrorCollector collects validation errors during validation

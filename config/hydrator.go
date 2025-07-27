@@ -168,6 +168,11 @@ func (h *structHydrator) setFieldValue(dest reflect.Value, raw any, fieldName st
 		return h.convertSlice(dest, src, fieldName)
 	}
 
+	// Handle map conversion
+	if dest.Kind() == reflect.Map && src.Kind() == reflect.Map {
+		return h.convertMap(dest, src, fieldName)
+	}
+
 	return fmt.Errorf("field %q type mismatch: cannot convert %v (%v) to %v", fieldName, raw, src.Type(), destType)
 }
 
@@ -242,6 +247,38 @@ func (h *structHydrator) convertSlice(dest, src reflect.Value, fieldName string)
 	}
 
 	dest.Set(newSlice)
+	return nil
+}
+
+// convertMap handles map conversion from interface{} values to specific types
+func (h *structHydrator) convertMap(dest, src reflect.Value, fieldName string) error {
+	destType := dest.Type()
+	destKeyType := destType.Key()
+	destValueType := destType.Elem()
+	
+	// Create new map
+	newMap := reflect.MakeMap(destType)
+	
+	for _, key := range src.MapKeys() {
+		srcKey := key
+		srcValue := src.MapIndex(key)
+		
+		// Convert key if needed
+		destKey := reflect.New(destKeyType).Elem()
+		if err := h.setFieldValue(destKey, srcKey.Interface(), fmt.Sprintf("%s[key]", fieldName)); err != nil {
+			return fmt.Errorf("failed to convert map key: %w", err)
+		}
+		
+		// Convert value if needed
+		destValue := reflect.New(destValueType).Elem()
+		if err := h.setFieldValue(destValue, srcValue.Interface(), fmt.Sprintf("%s[%v]", fieldName, destKey.Interface())); err != nil {
+			return fmt.Errorf("failed to convert map value for key %v: %w", destKey.Interface(), err)
+		}
+		
+		newMap.SetMapIndex(destKey, destValue)
+	}
+	
+	dest.Set(newMap)
 	return nil
 }
 

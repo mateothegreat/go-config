@@ -6,7 +6,7 @@ import (
 
 	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins"
-	"github.com/mateothegreat/go-config/validate"
+	"github.com/mateothegreat/go-config/validation"
 )
 
 // Loader provides the main interface for configuration loading
@@ -16,7 +16,7 @@ type Loader interface {
 	// SetDefaults sets default values
 	SetDefaults(defaults any) Loader
 	// SetValidator sets a custom validator
-	SetValidator(validator validate.Validator) Loader
+	SetValidator(validator validation.Validator) Loader
 	// Load processes all sources and validates the result
 	Load(ctx context.Context) error
 	// Sources returns the names of sources used
@@ -32,9 +32,9 @@ type Builder interface {
 	// WithDefaults sets default values
 	WithDefaults(defaults any) Builder
 	// WithValidator sets a custom validator
-	WithValidator(validator validate.Validator) Builder
+	WithValidator(validator validation.Validator) Builder
 	// WithValidationStrategy sets the validation strategy
-	WithValidationStrategy(strategy validate.ValidationStrategy) Builder
+	WithValidationStrategy(strategy validation.ValidationStrategy) Builder
 	// Build loads configuration into the target struct
 	Build(target any) error
 }
@@ -54,7 +54,7 @@ const (
 // LoaderConfig configures loader behavior
 type LoaderConfig struct {
 	HydrationStrategy     HydrationStrategy
-	ValidationStrategy    validate.ValidationStrategy
+	ValidationStrategy    validation.ValidationStrategy
 	FailOnSourceError     bool
 	FailOnValidationError bool
 	AllowUnknownFields    bool
@@ -65,7 +65,7 @@ type LoaderConfig struct {
 func DefaultLoaderConfig() LoaderConfig {
 	return LoaderConfig{
 		HydrationStrategy:     HydrationAuto,
-		ValidationStrategy:    validate.StrategyAuto,
+		ValidationStrategy:    validation.StrategyAuto,
 		FailOnSourceError:     true,
 		FailOnValidationError: true,
 		AllowUnknownFields:    true,
