@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// BenchmarkGeneratedValidation tests the performance of generated validation
+// BenchmarkGeneratedValidation tests the performance of generated validation.
 func BenchmarkGeneratedValidation(b *testing.B) {
 	config := &ServerConfig{
 		Name:     "test-server",
@@ -29,7 +29,7 @@ func BenchmarkGeneratedValidation(b *testing.B) {
 	}
 }
 
-// BenchmarkReflectionValidation simulates reflection-based validation for comparison
+// BenchmarkReflectionValidation simulates reflection-based validation for comparison.
 func BenchmarkReflectionValidation(b *testing.B) {
 	config := &ServerConfig{
 		Name:     "test-server",
@@ -52,7 +52,7 @@ func BenchmarkReflectionValidation(b *testing.B) {
 	}
 }
 
-// reflectionValidate simulates how reflection-based validators work
+// reflectionValidate simulates how reflection-based validators work.
 func reflectionValidate(config interface{}) error {
 	val := reflect.ValueOf(config).Elem()
 	typ := val.Type()
@@ -66,10 +66,10 @@ func reflectionValidate(config interface{}) error {
 			continue
 		}
 
-		// Simulate tag parsing (allocates strings)
+		// Simulate tag parsing (allocates strings).
 		rules := strings.Split(tag, ",")
 
-		// Simulate validation logic with reflection calls
+		// Simulate validation logic with reflection calls.
 		for _, rule := range rules {
 			if strings.HasPrefix(rule, "required") {
 				switch value.Kind() {
@@ -85,7 +85,7 @@ func reflectionValidate(config interface{}) error {
 			}
 
 			// More rule checking would happen here...
-			// Each reflection call adds overhead
+			// Each reflection call adds overhead.
 		}
 	}
 

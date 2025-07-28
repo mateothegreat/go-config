@@ -63,10 +63,10 @@ The CLI generates zero-reflection validation code:
 ```go
 func (s *ServerConfig) Validate() error {
     if s.Name == "" {
-        return goconfig.NewError().Field("Name").Required()
+        return errors.NewError().Field("Name").Required()
     }
     if len(s.Name) < 3 {
-        return goconfig.NewError().Field("Name").MinLength(3)
+        return errors.NewError().Field("Name").MinLength(3)
     }
     // ... more validations
     return nil

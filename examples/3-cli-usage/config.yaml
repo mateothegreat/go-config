@@ -1,5 +1,5 @@
 # Configuration for manual CLI usage example
-
+# Try changing values to test validation.
 server:
   name: "cli-demo-server"
   host: "localhost"

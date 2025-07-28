@@ -1,5 +1,5 @@
-# Example configuration file
-# Try changing values to test validation
+# Example configuration file.
+# Try changing values to test validation.
 
 name: "my-awesome-server"
 port: 8080

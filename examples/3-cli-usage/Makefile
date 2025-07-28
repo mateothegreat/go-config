@@ -1,47 +1,43 @@
-# Makefile for manual CLI usage example
-
-.PHONY: preview generate clean verify run help install-tools
-
-# Default target
+# Default targets to run when no arguments are provided to `make`.
 all: generate verify run
 
-# Install go-validate if not present
+# Install go-validate if not present.
 install-tools:
 	@echo "🛠️  Installing go-validate..."
 	go install github.com/mateothegreat/go-config/cmd/go-validate@latest
 	@echo "✅ Tools installed"
 
-# Preview validation code without writing files
+# Preview validation code without writing files.
 preview:
 	@echo "👀 Previewing validation code..."
 	go-validate generate --dry-run --verbose
 
-# Generate validation code
+# Generate validation code.
 generate:
 	@echo "🔄 Generating validation code..."
 	go-validate generate --verbose
 	@echo "✅ Validation code generated"
 
-# Generate for specific structs only
+# Generate for specific structs only.
 generate-specific:
 	@echo "🎯 Generating validation for specific structs..."
 	@echo "Structs: $(STRUCTS)"
 	go-validate generate --structs $(STRUCTS) --verbose
 
-# Generate to separate directory with multiple files
+# Generate to separate directory with multiple files.
 generate-multi:
 	@echo "📁 Generating validation to separate directory..."
 	mkdir -p validation
 	go-validate generate --output-dir validation --multi --verbose
 	@echo "✅ Multi-file validation generated in ./validation/"
 
-# Generate with custom package
+# Generate with custom package.
 generate-custom-package:
 	@echo "📦 Generating validation with custom package..."
 	mkdir -p generated
 	go-validate generate --output-dir generated --package validation --verbose
 
-# Clean generated files
+# Clean generated files.
 clean:
 	@echo "🧹 Cleaning generated files..."
 	rm -f *_generated.go
@@ -49,35 +45,35 @@ clean:
 	rm -rf generated/
 	@echo "✅ Cleanup complete"
 
-# Verify generated code compiles
+# Verify generated code compiles.
 verify: generate
 	@echo "🔍 Verifying generated code..."
 	go build -o /dev/null .
 	go vet .
 	@echo "✅ Generated code verified"
 
-# Run the example
+# Run the example.
 run: generate
 	@echo "🚀 Running CLI usage example..."
 	go run .
 
-# Development workflow with file watching (requires fswatch)
+# Development workflow with file watching (requires fswatch).
 watch:
 	@echo "👀 Watching for changes..."
 	@command -v fswatch >/dev/null 2>&1 || (echo "fswatch not found. Install with: brew install fswatch" && exit 1)
 	fswatch -o *.go | xargs -n1 -I{} make generate
 
-# Test the generated validation
+# Test the generated validation.			
 test: generate
 	@echo "🧪 Testing generated validation..."
 	go test -v .
 
-# Benchmark the generated validation
+# Benchmark the generated validation.
 bench: generate
 	@echo "📊 Benchmarking generated validation..."
 	go test -bench=. -benchmem .
 
-# Show differences between preview and actual generation
+# Show differences between preview and actual generation.
 diff-preview:
 	@echo "🔍 Comparing preview vs actual generation..."
 	@go-validate generate --dry-run > /tmp/preview.go
@@ -85,7 +81,7 @@ diff-preview:
 	@diff -u /tmp/preview.go /tmp/*_generated.go || true
 	@rm -f /tmp/preview.go /tmp/*_generated.go
 
-# Validate that generated code is up to date
+# Validate that generated code is up to date.
 validate-current:
 	@echo "🔍 Validating current generated code..."
 	@go-validate generate --dry-run > /tmp/current.go
@@ -97,11 +93,11 @@ validate-current:
 	fi
 	@rm -f /tmp/current.go
 
-# Full CI pipeline
+# Full CI pipeline.
 ci: clean generate verify test
 	@echo "✅ CI pipeline completed successfully"
 
-# Help target
+# Help target.
 help:
 	@echo "CLI Usage Example Makefile"
 	@echo "=========================="

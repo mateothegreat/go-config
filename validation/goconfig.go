@@ -36,13 +36,27 @@ type (
 	PluginMetadata  = plugins.PluginMetadata
 )
 
-// Configuration loading functions - Note: These create import cycles
-// Use the config package directly for these operations
-
-// Configuration loading functions would go here but create import cycles
-// Use github.com/mateothegreat/go-config/config package directly
-
-// Validation functions
+// Convenience constants for validation rules
+const (
+	Required     = "required"
+	Min          = "min"
+	Max          = "max"
+	MinLen       = "minlen"
+	MaxLen       = "maxlen"
+	Len          = "len"
+	Email        = "email"
+	URL          = "url"
+	Alpha        = "alpha"
+	AlphaNumeric = "alphanumeric"
+	Numeric      = "numeric"
+	Regex        = "regex"
+	OneOf        = "oneof"
+	Range        = "range"
+	IP           = "ip"
+	UUID         = "uuid"
+	CreditCard   = "creditcard"
+	Phone        = "phone"
+)
 
 // NewValidator creates a new unified validator
 func NewValidator() Validator {
@@ -78,7 +92,7 @@ func HasGeneratedValidator(data any) bool {
 	return globalGeneratedRegistry.HasGeneratedValidator(data)
 }
 
-// ValidateWithGenerated validates using generated validation  
+// ValidateWithGenerated validates using generated validation
 func ValidateWithGenerated(data any) error {
 	return globalGeneratedRegistry.ValidateWithGenerated(data)
 }
@@ -141,30 +155,3 @@ func ListSourcePlugins() []string {
 func ListValidatorPlugins() []string {
 	return plugins.ListValidatorPlugins()
 }
-
-// Default configurations
-
-// Default configurations would go here but create import cycles
-// Use github.com/mateothegreat/go-config/config package directly
-
-// Convenience constants for validation rules
-const (
-	Required     = "required"
-	Min          = "min"
-	Max          = "max"
-	MinLen       = "minlen"
-	MaxLen       = "maxlen"
-	Len          = "len"
-	Email        = "email"
-	URL          = "url"
-	Alpha        = "alpha"
-	AlphaNumeric = "alphanumeric"
-	Numeric      = "numeric"
-	Regex        = "regex"
-	OneOf        = "oneof"
-	Range        = "range"
-	IP           = "ip"
-	UUID         = "uuid"
-	CreditCard   = "creditcard"
-	Phone        = "phone"
-)

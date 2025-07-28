@@ -5,23 +5,24 @@ import (
 	"fmt"
 	"log"
 
-	goconfig "github.com/mateothegreat/go-config"
+	"github.com/mateothegreat/go-config/config"
+	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
+	"github.com/mateothegreat/go-config/validation"
 )
 
 func main() {
 	fmt.Println("🚀 Basic Validation Example - Unified Architecture")
 	fmt.Println("==================================================")
 
-	// Method 1: Using the fluent builder API
+	// Method 1: Using the fluent builder API.
 	fmt.Println("📋 Method 1: Using Fluent Builder API")
 	config1 := &ServerConfig{}
 
-	err := goconfig.LoadWithPlugins(
-		goconfig.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
-		goconfig.FromEnv(sources.EnvOpts{Prefix: "SERVER"}),
-	).WithValidationStrategy(goconfig.StrategyAuto).Build(config1)
-
+	err := config.LoadWithPlugins(
+		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
+		config.FromEnv(sources.EnvOpts{Prefix: "SERVER"}),
+	).WithValidationStrategy(validation.StrategyAuto).Build(config1)
 	if err != nil {
 		fmt.Println("❌ Validation failed!")
 		handleValidationError(err)
@@ -32,27 +33,27 @@ func main() {
 	fmt.Printf("🎯 Server '%s' will run on %s:%d (log level: %s)\n\n",
 		config1.Name, config1.Host, config1.Port, config1.LogLevel)
 
-	// Method 2: Using the loader API for more control
+	// Method 2: Using the loader API for more control.
 	fmt.Println("📋 Method 2: Using Loader API with Custom Validation")
 	config2 := &ServerConfig{}
 
-	loader := goconfig.NewLoader(config2)
+	loader := config.NewConfigLoader(config2)
 
-	// Add YAML source
-	yamlPlugin, err := goconfig.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
+	// Now we layer in a YAML source.
+	yamlPlugin, err := plugins.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
 	if err != nil {
 		log.Fatalf("Failed to create YAML plugin: %v", err)
 	}
 	loader.Use(yamlPlugin)
 
-	// Add environment variable source (higher priority - overrides YAML)
-	envPlugin, err := goconfig.CreateSourcePlugin("env", sources.EnvOpts{Prefix: "SERVER"})
+	// Now we layer in an environment variable source (higher priority - overrides YAML).
+	envPlugin, err := plugins.CreateSourcePlugin("env", sources.EnvOpts{Prefix: "SERVER"})
 	if err != nil {
 		log.Fatalf("Failed to create ENV plugin: %v", err)
 	}
 	loader.Use(envPlugin)
 
-	// Set defaults
+	// We'll set some defaults for
 	defaults := &ServerConfig{
 		Host:     "localhost",
 		Port:     8080,
@@ -61,7 +62,7 @@ func main() {
 	}
 	loader.SetDefaults(defaults)
 
-	// Load and validate
+	// Then, let's load and validate.
 	if err := loader.Load(context.Background()); err != nil {
 		fmt.Println("❌ Configuration loading/validation failed!")
 		handleValidationError(err)
@@ -72,7 +73,7 @@ func main() {
 	fmt.Printf("🎯 Server '%s' will run on %s:%d (log level: %s)\n",
 		config2.Name, config2.Host, config2.Port, config2.LogLevel)
 
-	// Show inspection data
+	// Finally, let's show the inspection data.
 	fmt.Println("\n🔍 Configuration sources used:")
 	for _, source := range loader.Sources() {
 		fmt.Printf("  - %s\n", source)
@@ -85,10 +86,10 @@ func main() {
 	}
 }
 
-// handleValidationError provides detailed error handling
+// handleValidationError provides detailed error handling.
 func handleValidationError(err error) {
-	// Check if it's a correlated error with suggestions
-	if correlatedErr, ok := err.(*goconfig.CorrelatedError); ok {
+	// Check if it's a correlated error with suggestions.
+	if correlatedErr, ok := err.(*validation.CorrelatedError); ok {
 		fmt.Printf("Error: %s\n", correlatedErr.Error())
 
 		fmt.Println("\n💡 Suggestions:")
@@ -98,8 +99,8 @@ func handleValidationError(err error) {
 		return
 	}
 
-	// Check if it's validation errors
-	if validationErrs, ok := goconfig.AsValidationErrors(err); ok {
+	// Check if it's validation errors.
+	if validationErrs, ok := validation.AsValidationErrors(err); ok {
 		fmt.Println("Validation errors found:")
 		for _, validationErr := range validationErrs.Errors() {
 			fmt.Printf("  - %s\n", validationErr.Error())
@@ -107,7 +108,7 @@ func handleValidationError(err error) {
 		return
 	}
 
-	// Generic error
+	// Emit a generic error.
 	fmt.Printf("Error: %v\n", err)
 	fmt.Println("\n💡 Try fixing the config.yaml file and run again!")
 }

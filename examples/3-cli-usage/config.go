@@ -1,8 +1,8 @@
+// This example requires that you run the CLI commands manually to generate the
+// validation code. So that means no go:generate directives!
 package main
 
-// Note: No go:generate directives - this example uses manual CLI commands
-
-// ServerConfig demonstrates manual CLI validation generation
+// ServerConfig demonstrates manual CLI validation generation.
 type ServerConfig struct {
 	// Basic server settings
 	Name string `validate:"required,minlen=3,maxlen=50" yaml:"name"`

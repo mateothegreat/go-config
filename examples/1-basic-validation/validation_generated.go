@@ -5,7 +5,7 @@ package main
 import (
 	"regexp"
 
-	goconfig "github.com/mateothegreat/go-config"
+	"github.com/mateothegreat/go-config/errors"
 )
 
 // Pre-compiled regex patterns for validation performance
@@ -17,37 +17,37 @@ var (
 // Validate validates the ServerConfig struct using zero-reflection validation
 func (s *ServerConfig) Validate() error {
 	if s.Name == "" {
-		return goconfig.NewError().Field("Name").Required()
+		return errors.NewError().Field("Name").Required()
 	}
 	if len(s.Name) < 3 {
-		return goconfig.NewError().Field("Name").MinLength(3)
+		return errors.NewError().Field("Name").MinLength(3)
 	}
 	if len(s.Name) > 50 {
-		return goconfig.NewError().Field("Name").MaxLength(50)
+		return errors.NewError().Field("Name").MaxLength(50)
 	}
 	if s.Port < 1 {
-		return goconfig.NewError().Field("Port").Format("must be at least 1")
+		return errors.NewError().Field("Port").Format("must be at least 1")
 	}
 	if s.Port > 65535 {
-		return goconfig.NewError().Field("Port").Format("must be at most 65535")
+		return errors.NewError().Field("Port").Format("must be at most 65535")
 	}
 	if s.Host == "" {
-		return goconfig.NewError().Field("Host").Required()
+		return errors.NewError().Field("Host").Required()
 	}
 	if s.Email == "" {
-		return goconfig.NewError().Field("Email").Required()
+		return errors.NewError().Field("Email").Required()
 	}
 	if !emailRegex.MatchString(s.Email) {
-		return goconfig.NewError().Field("Email").Format("must be a valid email address")
+		return errors.NewError().Field("Email").Format("must be a valid email address")
 	}
 	if s.LogLevel != "" && s.LogLevel != "debug" && s.LogLevel != "info" && s.LogLevel != "warn" && s.LogLevel != "error" {
-		return goconfig.NewError().Field("LogLevel").Format("must be one of: debug, info, warn, error")
+		return errors.NewError().Field("LogLevel").Format("must be one of: debug, info, warn, error")
 	}
 	if s.Version == "" {
-		return goconfig.NewError().Field("Version").Required()
+		return errors.NewError().Field("Version").Required()
 	}
 	if !versionRegex.MatchString(s.Version) {
-		return goconfig.NewError().Field("Version").Format("must match pattern: ^v[0-9]+\\.[0-9]+\\.[0-9]+$")
+		return errors.NewError().Field("Version").Format("must match pattern: ^v[0-9]+\\.[0-9]+\\.[0-9]+$")
 	}
 	return nil
 }

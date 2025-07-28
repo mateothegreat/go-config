@@ -5,56 +5,58 @@ import (
 	"os"
 	"testing"
 
+	"github.com/mateothegreat/go-config/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	goconfig "github.com/mateothegreat/go-config"
+	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
+	"github.com/mateothegreat/go-config/validation"
 )
 
 func TestLoadConfigFluentAPI(t *testing.T) {
-	config := &ServerConfig{}
+	cfg := &ServerConfig{}
 
-	err := goconfig.LoadWithPlugins(
-		goconfig.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
-	).Build(config)
+	err := config.LoadWithPlugins(
+		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
+	).Build(cfg)
 
 	require.NoError(t, err)
 
-	assert.Equal(t, "my-awesome-server", config.Name)
-	assert.Equal(t, 8080, config.Port)
-	assert.Equal(t, "localhost", config.Host)
-	assert.Equal(t, "admin@example.com", config.Email)
-	assert.Equal(t, "info", config.LogLevel)
-	assert.Equal(t, false, config.Debug)
-	assert.Equal(t, "v1.2.3", config.Version)
+	assert.Equal(t, "my-awesome-server", cfg.Name)
+	assert.Equal(t, 8080, cfg.Port)
+	assert.Equal(t, "localhost", cfg.Host)
+	assert.Equal(t, "admin@example.com", cfg.Email)
+	assert.Equal(t, "info", cfg.LogLevel)
+	assert.Equal(t, false, cfg.Debug)
+	assert.Equal(t, "v1.2.3", cfg.Version)
 }
 
 func TestLoadConfigLoaderAPI(t *testing.T) {
-	config := &ServerConfig{}
+	cfg := &ServerConfig{}
 
-	loader := goconfig.NewLoader(config)
+	loader := config.NewConfigLoader(cfg)
 
-	// Add YAML source
-	yamlPlugin, err := goconfig.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
+	// Add YAML source.
+	yamlPlugin, err := plugins.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
 	require.NoError(t, err)
 	loader.Use(yamlPlugin)
 
-	// Load and validate
+	// Load and validate.
 	err = loader.Load(context.Background())
 	require.NoError(t, err)
 
-	assert.Equal(t, "my-awesome-server", config.Name)
-	assert.Equal(t, 8080, config.Port)
-	assert.Equal(t, "localhost", config.Host)
-	assert.Equal(t, "admin@example.com", config.Email)
-	assert.Equal(t, "info", config.LogLevel)
-	assert.Equal(t, false, config.Debug)
-	assert.Equal(t, "v1.2.3", config.Version)
+	assert.Equal(t, "my-awesome-server", cfg.Name)
+	assert.Equal(t, 8080, cfg.Port)
+	assert.Equal(t, "localhost", cfg.Host)
+	assert.Equal(t, "admin@example.com", cfg.Email)
+	assert.Equal(t, "info", cfg.LogLevel)
+	assert.Equal(t, false, cfg.Debug)
+	assert.Equal(t, "v1.2.3", cfg.Version)
 }
 
 func TestLoadConfigWithDefaults(t *testing.T) {
-	config := &ServerConfig{}
+	cfg := &ServerConfig{}
 
 	defaults := &ServerConfig{
 		Host:     "0.0.0.0",
@@ -63,23 +65,23 @@ func TestLoadConfigWithDefaults(t *testing.T) {
 		Debug:    true,
 	}
 
-	err := goconfig.LoadWithPlugins(
-		goconfig.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
-	).WithDefaults(defaults).Build(config)
+	err := config.LoadWithPlugins(
+		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
+	).WithDefaults(defaults).Build(cfg)
 
 	require.NoError(t, err)
 
-	// YAML values should override defaults
-	assert.Equal(t, "my-awesome-server", config.Name)
-	assert.Equal(t, 8080, config.Port)        // From YAML, not default
-	assert.Equal(t, "localhost", config.Host) // From YAML, not default
-	assert.Equal(t, "info", config.LogLevel)  // From YAML, not default
-	assert.Equal(t, false, config.Debug)      // From YAML, not default
-	assert.Equal(t, "v1.2.3", config.Version)
+	// YAML values should override defaults.
+	assert.Equal(t, "my-awesome-server", cfg.Name)
+	assert.Equal(t, 8080, cfg.Port)
+	assert.Equal(t, "localhost", cfg.Host)
+	assert.Equal(t, "info", cfg.LogLevel)
+	assert.Equal(t, false, cfg.Debug)
+	assert.Equal(t, "v1.2.3", cfg.Version)
 }
 
 func TestLoadConfigWithEnvOverride(t *testing.T) {
-	// Set environment variables
+	// Set environment variables.
 	os.Setenv("SERVER_NAME", "env-server")
 	os.Setenv("SERVER_PORT", "9090")
 	os.Setenv("SERVER_DEBUG", "true")
@@ -89,28 +91,28 @@ func TestLoadConfigWithEnvOverride(t *testing.T) {
 		os.Unsetenv("SERVER_DEBUG")
 	}()
 
-	config := &ServerConfig{}
+	cfg := &ServerConfig{}
 
-	err := goconfig.LoadWithPlugins(
-		goconfig.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
-		goconfig.FromEnv(sources.EnvOpts{Prefix: "SERVER"}),
-	).Build(config)
+	err := config.LoadWithPlugins(
+		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
+		config.FromEnv(sources.EnvOpts{Prefix: "SERVER"}),
+	).Build(cfg)
 
 	require.NoError(t, err)
 
-	// Environment variables should override YAML
-	assert.Equal(t, "env-server", config.Name) // From env
-	assert.Equal(t, 9090, config.Port)         // From env
-	assert.Equal(t, true, config.Debug)        // From env
-	// Other values from YAML
-	assert.Equal(t, "localhost", config.Host)
-	assert.Equal(t, "admin@example.com", config.Email)
-	assert.Equal(t, "info", config.LogLevel)
-	assert.Equal(t, "v1.2.3", config.Version)
+	// Environment variables should override YAML.
+	assert.Equal(t, "env-server", cfg.Name)
+	assert.Equal(t, 9090, cfg.Port)
+	assert.Equal(t, true, cfg.Debug)
+	// Other values from YAML.
+	assert.Equal(t, "localhost", cfg.Host)
+	assert.Equal(t, "admin@example.com", cfg.Email)
+	assert.Equal(t, "info", cfg.LogLevel)
+	assert.Equal(t, "v1.2.3", cfg.Version)
 }
 
 func TestValidationWithInvalidConfig(t *testing.T) {
-	config := &ServerConfig{
+	cfg := &ServerConfig{
 		Name:     "ab",            // Too short (min 3)
 		Port:     70000,           // Too high (max 65535)
 		Host:     "",              // Required
@@ -121,37 +123,37 @@ func TestValidationWithInvalidConfig(t *testing.T) {
 	}
 
 	// Use a static source for testing
-	loader := goconfig.NewLoader(config)
+	loader := config.NewConfigLoader(cfg)
 	err := loader.Load(context.Background())
 
 	assert.Error(t, err)
 
-	// Check if we can get validation errors
-	if validationErrs, ok := goconfig.AsValidationErrors(err); ok {
+	// Check if we can get validation errors.
+	if validationErrs, ok := validation.AsValidationErrors(err); ok {
 		errors := validationErrs.Errors()
 		assert.True(t, len(errors) > 0)
 	}
 }
 
 func TestInspectionAPI(t *testing.T) {
-	config := &ServerConfig{}
+	cfg := &ServerConfig{}
 
-	loader := goconfig.NewLoader(config)
+	loader := config.NewConfigLoader(cfg)
 
-	yamlPlugin, err := goconfig.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
+	yamlPlugin, err := plugins.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config.yaml"})
 	require.NoError(t, err)
 	loader.Use(yamlPlugin)
 
 	err = loader.Load(context.Background())
 	require.NoError(t, err)
 
-	// Test sources
+	// Test sources.
 	sources := loader.Sources()
 	assert.Contains(t, sources, "yaml")
 
-	// Test inspection
+	// Test inspection.
 	data := loader.Inspect()
 	assert.Equal(t, "my-awesome-server", data["name"])
-	assert.Equal(t, 8080, data["port"]) // Port number from YAML
+	assert.Equal(t, 8080, data["port"])
 	assert.Equal(t, "localhost", data["host"])
 }

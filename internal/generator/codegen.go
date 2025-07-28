@@ -132,17 +132,17 @@ func (cg *CodeGenerator) buildRequiredValidator(field scanner.FieldInfo) string 
 	case "string":
 		return fmt.Sprintf(`
 	if s.%s == "" {
-		return goconfig.NewError().Field("%s").Required()
+		return errors.NewError().Field("%s").Required()
 	}`, field.Name, field.Name)
 	case "int", "int8", "int16", "int32", "int64":
 		return fmt.Sprintf(`
 	if s.%s == 0 {
-		return goconfig.NewError().Field("%s").Required()
+		return errors.NewError().Field("%s").Required()
 	}`, field.Name, field.Name)
 	default:
 		return fmt.Sprintf(`
 	if s.%s == nil || reflect.ValueOf(s.%s).IsZero() {
-		return goconfig.NewError().Field("%s").Required()
+		return errors.NewError().Field("%s").Required()
 	}`, field.Name, field.Name, field.Name)
 	}
 }
@@ -164,12 +164,12 @@ func (cg *CodeGenerator) buildMinValidator(field scanner.FieldInfo, minValue str
 	case strings.HasPrefix(field.Type, "int"):
 		return fmt.Sprintf(`
 	if s.%s < %s {
-		return goconfig.NewError().Field("%s").Format("must be at least %s")
+		return errors.NewError().Field("%s").Format("must be at least %s")
 	}`, field.Name, minValue, field.Name, minValue)
 	case strings.HasPrefix(field.Type, "float"):
 		return fmt.Sprintf(`
 	if s.%s < %s {
-		return goconfig.NewError().Field("%s").Format("must be at least %s")
+		return errors.NewError().Field("%s").Format("must be at least %s")
 	}`, field.Name, minValue, field.Name, minValue)
 	default:
 		return fmt.Sprintf("// Min validation not supported for type %s", field.Type)
@@ -182,12 +182,12 @@ func (cg *CodeGenerator) buildMaxValidator(field scanner.FieldInfo, maxValue str
 	case strings.HasPrefix(field.Type, "int"):
 		return fmt.Sprintf(`
 	if s.%s > %s {
-		return goconfig.NewError().Field("%s").Format("must be at most %s")
+		return errors.NewError().Field("%s").Format("must be at most %s")
 	}`, field.Name, maxValue, field.Name, maxValue)
 	case strings.HasPrefix(field.Type, "float"):
 		return fmt.Sprintf(`
 	if s.%s > %s {
-		return goconfig.NewError().Field("%s").Format("must be at most %s")
+		return errors.NewError().Field("%s").Format("must be at most %s")
 	}`, field.Name, maxValue, field.Name, maxValue)
 	default:
 		return fmt.Sprintf("// Max validation not supported for type %s", field.Type)
@@ -199,7 +199,7 @@ func (cg *CodeGenerator) buildMinLenValidator(field scanner.FieldInfo, minLen st
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if len(s.%s) < %s {
-		return goconfig.NewError().Field("%s").MinLength(%s)
+		return errors.NewError().Field("%s").MinLength(%s)
 	}`, field.Name, minLen, field.Name, minLen)
 	}
 	return fmt.Sprintf("// MinLen validation not supported for type %s", field.Type)
@@ -210,7 +210,7 @@ func (cg *CodeGenerator) buildMaxLenValidator(field scanner.FieldInfo, maxLen st
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if len(s.%s) > %s {
-		return goconfig.NewError().Field("%s").MaxLength(%s)
+		return errors.NewError().Field("%s").MaxLength(%s)
 	}`, field.Name, maxLen, field.Name, maxLen)
 	}
 	return fmt.Sprintf("// MaxLen validation not supported for type %s", field.Type)
@@ -221,7 +221,7 @@ func (cg *CodeGenerator) buildLenValidator(field scanner.FieldInfo, expectedLen 
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if len(s.%s) != %s {
-		return goconfig.NewError().Field("%s").Format("must be exactly %s characters long")
+		return errors.NewError().Field("%s").Format("must be exactly %s characters long")
 	}`, field.Name, expectedLen, field.Name, expectedLen)
 	}
 	return fmt.Sprintf("// Len validation not supported for type %s", field.Type)
@@ -232,7 +232,7 @@ func (cg *CodeGenerator) buildEmailValidator(field scanner.FieldInfo) string {
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if !emailRegex.MatchString(s.%s) {
-		return goconfig.NewError().Field("%s").Format("must be a valid email address")
+		return errors.NewError().Field("%s").Format("must be a valid email address")
 	}`, field.Name, field.Name)
 	}
 	return fmt.Sprintf("// Email validation not supported for type %s", field.Type)
@@ -243,7 +243,7 @@ func (cg *CodeGenerator) buildURLValidator(field scanner.FieldInfo) string {
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if !urlRegex.MatchString(s.%s) {
-		return goconfig.NewError().Field("%s").Format("must be a valid URL")
+		return errors.NewError().Field("%s").Format("must be a valid URL")
 	}`, field.Name, field.Name)
 	}
 	return fmt.Sprintf("// URL validation not supported for type %s", field.Type)
@@ -254,7 +254,7 @@ func (cg *CodeGenerator) buildAlphaValidator(field scanner.FieldInfo) string {
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if !alphaRegex.MatchString(s.%s) {
-		return goconfig.NewError().Field("%s").Format("must contain only alphabetic characters")
+		return errors.NewError().Field("%s").Format("must contain only alphabetic characters")
 	}`, field.Name, field.Name)
 	}
 	return fmt.Sprintf("// Alpha validation not supported for type %s", field.Type)
@@ -265,7 +265,7 @@ func (cg *CodeGenerator) buildAlphaNumericValidator(field scanner.FieldInfo) str
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if !alphaNumRegex.MatchString(s.%s) {
-		return goconfig.NewError().Field("%s").Format("must contain only alphanumeric characters")
+		return errors.NewError().Field("%s").Format("must contain only alphanumeric characters")
 	}`, field.Name, field.Name)
 	}
 	return fmt.Sprintf("// AlphaNumeric validation not supported for type %s", field.Type)
@@ -276,7 +276,7 @@ func (cg *CodeGenerator) buildNumericValidator(field scanner.FieldInfo) string {
 	if field.Type == "string" {
 		return fmt.Sprintf(`
 	if !numericRegex.MatchString(s.%s) {
-		return goconfig.NewError().Field("%s").Format("must contain only numeric characters")
+		return errors.NewError().Field("%s").Format("must contain only numeric characters")
 	}`, field.Name, field.Name)
 	}
 	return fmt.Sprintf("// Numeric validation not supported for type %s", field.Type)
@@ -289,7 +289,7 @@ func (cg *CodeGenerator) buildRegexValidator(field scanner.FieldInfo, pattern st
 		return fmt.Sprintf(`
 	%s := regexp.MustCompile(%s)
 	if !%s.MatchString(s.%s) {
-		return goconfig.NewError().Field("%s").Format("does not match required pattern")
+		return errors.NewError().Field("%s").Format("does not match required pattern")
 	}`, regexVarName, pattern, regexVarName, field.Name, field.Name)
 	}
 	return fmt.Sprintf("// Regex validation not supported for type %s", field.Type)
@@ -308,7 +308,7 @@ func (cg *CodeGenerator) buildOneOfValidator(field scanner.FieldInfo, options st
 
 		return fmt.Sprintf(`
 	if !(%s) {
-		return goconfig.NewError().Field("%s").Format("must be one of [%s]")
+		return errors.NewError().Field("%s").Format("must be one of [%s]")
 	}`, condition, field.Name, options)
 	}
 	return fmt.Sprintf("// OneOf validation not supported for type %s", field.Type)
@@ -327,12 +327,12 @@ func (cg *CodeGenerator) buildRangeValidator(field scanner.FieldInfo, rangeValue
 	case strings.HasPrefix(field.Type, "int"):
 		return fmt.Sprintf(`
 	if s.%s < %s || s.%s > %s {
-		return goconfig.NewError().Field("%s").Range(%s, %s)
+		return errors.NewError().Field("%s").Range(%s, %s)
 	}`, field.Name, min, field.Name, max, field.Name, min, max)
 	case strings.HasPrefix(field.Type, "float"):
 		return fmt.Sprintf(`
 	if s.%s < %s || s.%s > %s {
-		return goconfig.NewError().Field("%s").Range(%s, %s)
+		return errors.NewError().Field("%s").Range(%s, %s)
 	}`, field.Name, min, field.Name, max, field.Name, min, max)
 	default:
 		return fmt.Sprintf("// Range validation not supported for type %s", field.Type)

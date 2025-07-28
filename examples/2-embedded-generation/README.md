@@ -175,10 +175,10 @@ The generated code is optimized and readable:
 
 func (a *AppConfig) Validate() error {
     if a.Name == "" {
-        return goconfig.NewError().Field("Name").Required()
+        return errors.NewError().Field("Name").Required()
     }
     if len(a.Name) < 3 {
-        return goconfig.NewError().Field("Name").MinLength(3)
+        return errors.NewError().Field("Name").MinLength(3)
     }
     return nil
 }

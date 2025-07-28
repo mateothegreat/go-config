@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	goconfig "github.com/mateothegreat/go-config"
 	"github.com/mateothegreat/go-config/config"
+	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
 	"github.com/mateothegreat/go-config/validation"
 )
@@ -17,7 +17,7 @@ import (
 func testValidation() {
 	fmt.Println("🧪 Testing the fixed validation system...")
 
-	// Load config using standard YAML parsing
+	// Load config using standard YAML parsing.
 	data, err := os.ReadFile("config_app.yaml")
 	if err != nil {
 		fmt.Printf("❌ Error reading YAML: %v\n", err)
@@ -33,12 +33,12 @@ func testValidation() {
 
 	fmt.Println("✅ Configuration loaded successfully!")
 
-	// Test generated validation detection
-	if goconfig.HasGeneratedValidator(&config) {
+	// Test generated validation detection.
+	if validation.HasGeneratedValidator(&config) {
 		fmt.Println("✅ Generated validator detected!")
 
-		// Test generated validation
-		err = goconfig.ValidateWithGenerated(&config)
+		// Test generated validation.
+		err = validation.ValidateWithGenerated(&config)
 		if err != nil {
 			fmt.Printf("❌ Validation failed: %v\n", err)
 		} else {
@@ -48,23 +48,23 @@ func testValidation() {
 		fmt.Println("❌ No generated validator found")
 	}
 
-	// Test individual component validation
+	// Test individual component validation.
 	fmt.Println("\n🔍 Testing individual components:")
 
-	// Test server config
-	if goconfig.HasGeneratedValidator(&config.Server) {
+	// Test server config.
+	if validation.HasGeneratedValidator(&config.Server) {
 		fmt.Println("✅ ServerConfig has generated validation")
-		if err := goconfig.ValidateWithGenerated(&config.Server); err != nil {
+		if err := validation.ValidateWithGenerated(&config.Server); err != nil {
 			fmt.Printf("❌ ServerConfig validation failed: %v\n", err)
 		} else {
 			fmt.Println("✅ ServerConfig validation passed")
 		}
 	}
 
-	// Test database config
-	if goconfig.HasGeneratedValidator(&config.Database) {
+	// Test database config.
+	if validation.HasGeneratedValidator(&config.Database) {
 		fmt.Println("✅ DatabaseConfig has generated validation")
-		if err := goconfig.ValidateWithGenerated(&config.Database); err != nil {
+		if err := validation.ValidateWithGenerated(&config.Database); err != nil {
 			fmt.Printf("❌ DatabaseConfig validation failed: %v\n", err)
 		} else {
 			fmt.Println("✅ DatabaseConfig validation passed")
@@ -92,21 +92,21 @@ func main() {
 	fmt.Println("🔄 Embedded Generation Example - Unified Architecture")
 	fmt.Println("====================================================")
 
-	// Test the fixed validation system first
+	// Test the fixed validation system first.
 	testValidation()
 
-	// Method 1: Using the unified loader with auto-detection
+	// Method 1: Using the unified loader with auto-detection.
 	fmt.Println("\n📋 Method 1: Auto-Detection of Generated Validation")
 	config1 := &AppConfig{}
 
-	// Debug: Try using the direct loader instead
+	// Debug: Try using the direct loader instead.
 	fmt.Println("🔍 Debug: Testing direct loader...")
-	debugLoader := goconfig.NewLoader(config1)
+	debugLoader := config.NewConfigLoader(config1)
 	debugYAML(*config1)
 
-	// Try creating a plugin manually
+	// Try creating a plugin manually.
 	fmt.Println("🔍 Debug: Creating YAML plugin...")
-	debugYamlPlugin, err := goconfig.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config_app.yaml"})
+	debugYamlPlugin, err := plugins.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config_app.yaml"})
 	if err != nil {
 		fmt.Printf("❌ Failed to create YAML plugin: %v\n", err)
 		return
@@ -122,15 +122,15 @@ func main() {
 		fmt.Printf("Raw error: %v\n", err)
 		fmt.Printf("Error type: %T\n", err)
 
-		// Check loader errors
+		// Check loader errors.
 		loaderErrors := debugLoader.Errors()
 		fmt.Printf("🔍 Debug: Loader has %d errors:\n", len(loaderErrors))
 		for i, lerr := range loaderErrors {
 			fmt.Printf("  Error %d: %v (type: %T)\n", i, lerr, lerr)
 		}
 
-		// Try to get more details about the error
-		if correlatedErr, ok := err.(*goconfig.CorrelatedError); ok {
+		// Try to get more details about the error.
+		if correlatedErr, ok := err.(*validation.CorrelatedError); ok {
 			fmt.Println("🔍 Debug: Correlated error details:")
 			fmt.Printf("  Correlations count: %d\n", len(correlatedErr.Correlations))
 			fmt.Printf("  Summary: %s\n", correlatedErr.Summary)
@@ -150,7 +150,8 @@ func main() {
 	fmt.Println("✅ Configuration loaded successfully without validation!")
 
 	fmt.Println("🔍 Debug: Now trying with validation...")
-	// Now try with validation
+
+	// Now try with validation.
 	config2 := &AppConfig{}
 	err = config.LoadWithPlugins(
 		config.FromYAML(sources.YAMLOpts{Path: "config_app.yaml"}),
@@ -167,21 +168,21 @@ func main() {
 	fmt.Println("✅ Configuration loaded and validated successfully!")
 	fmt.Printf("🎯 Auto-detected validation strategy used\n\n")
 
-	// Method 2: Explicitly using generated validation
+	// Method 2: Explicitly using generated validation.
 	fmt.Println("📋 Method 2: Explicit Generated Validation Strategy")
 	config3 := &AppConfig{}
 
-	loader := goconfig.NewLoader(config3)
+	loader := config.NewConfigLoader(config3)
 
-	// Add YAML source
-	yamlPlugin, err := goconfig.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config_app.yaml"})
+	// Add YAML source.
+	yamlPlugin, err := plugins.CreateSourcePlugin("yaml", sources.YAMLOpts{Path: "config_app.yaml"})
 	if err != nil {
 		log.Fatalf("Failed to create YAML plugin: %v", err)
 	}
 	loader.Use(yamlPlugin)
 
-	// Set explicit validation strategy to use generated code
-	validator := goconfig.NewValidatorWithConfig(validation.ValidatorConfig{
+	// Set explicit validation strategy to use generated code.
+	validator := validation.NewValidatorWithConfig(validation.ValidatorConfig{
 		Strategy: validation.StrategyGenerated,
 	})
 	loader.SetValidator(validator)
@@ -194,38 +195,38 @@ func main() {
 
 	fmt.Println("✅ Configuration loaded with generated validation!")
 
-	// Method 3: Testing nested struct validation
+	// Method 3: Testing nested struct validation.
 	fmt.Println("\n📋 Method 3: Nested Struct Validation")
 
-	// Show validation detection info
-	detector := goconfig.NewValidationDetector(goconfig.ValidatorConfig{
-		Strategy: goconfig.StrategyAuto,
+	// Show validation detection info.
+	detector := validation.NewValidationDetector(validation.ValidatorConfig{
+		Strategy: validation.StrategyAuto,
 	})
 
 	info := detector.GetValidationInfo(config3)
 	fmt.Printf("🔍 Validation Info: %s\n", info.String())
 
-	// Test individual nested components if they have generated validation
-	if goconfig.HasGeneratedValidator(&config3.Server) {
+	// Test individual nested components if they have generated validation.
+	if validation.HasGeneratedValidator(&config3.Server) {
 		fmt.Println("✅ ServerConfig has generated validation")
-		if err := goconfig.ValidateWithGenerated(&config3.Server); err != nil {
+		if err := validation.ValidateWithGenerated(&config3.Server); err != nil {
 			fmt.Printf("❌ ServerConfig validation failed: %v\n", err)
 		} else {
 			fmt.Println("✅ ServerConfig validation passed")
 		}
 	}
 
-	if goconfig.HasGeneratedValidator(&config3.Database) {
+	if validation.HasGeneratedValidator(&config3.Database) {
 		fmt.Println("✅ DatabaseConfig has generated validation")
-		if err := goconfig.ValidateWithGenerated(&config3.Database); err != nil {
+		if err := validation.ValidateWithGenerated(&config3.Database); err != nil {
 			fmt.Printf("❌ DatabaseConfig validation failed: %v\n", err)
 		} else {
 			fmt.Println("✅ DatabaseConfig validation passed")
 		}
 	}
 
-	// Features config typically doesn't have validation
-	if !goconfig.HasGeneratedValidator(&config3.Features) {
+	// Features config typically doesn't have validation.
+	if !validation.HasGeneratedValidator(&config3.Features) {
 		fmt.Println("ℹ️  FeatureConfig has no generated validation")
 	}
 
@@ -233,7 +234,7 @@ func main() {
 	fmt.Printf("🚀 Application '%s' (%s) ready to start on %s:%d\n",
 		config3.Name, config3.Version, config3.Server.Host, config3.Server.Port)
 
-	// Show final configuration
+	// Show final configuration.
 	fmt.Println("\n📊 Final Configuration:")
 	data := loader.Inspect()
 	for key, value := range data {
@@ -241,10 +242,10 @@ func main() {
 	}
 }
 
-// handleError provides comprehensive error handling
+// handleError provides comprehensive error handling.
 func handleError(err error) {
-	// Check if it's a correlated error with suggestions
-	if correlatedErr, ok := err.(*goconfig.CorrelatedError); ok {
+	// Check if it's a correlated error with suggestions.
+	if correlatedErr, ok := err.(*validation.CorrelatedError); ok {
 		fmt.Printf("Error: %s\n", correlatedErr.Error())
 
 		fmt.Println("\n💡 Suggestions:")
@@ -254,8 +255,8 @@ func handleError(err error) {
 		return
 	}
 
-	// Check if it's validation errors
-	if validationErrs, ok := goconfig.AsValidationErrors(err); ok {
+	// Check if it's validation errors.
+	if validationErrs, ok := validation.AsValidationErrors(err); ok {
 		fmt.Println("Validation errors found:")
 		for _, validationErr := range validationErrs.Errors() {
 			fmt.Printf("  - %s\n", validationErr.Error())
@@ -263,6 +264,6 @@ func handleError(err error) {
 		return
 	}
 
-	// Generic error
+	// Generic error.
 	fmt.Printf("Error: %v\n", err)
 }
