@@ -1,7 +1,12 @@
 package main
 
 type AppConfig struct {
-	Name        string `validate:"required,minlen=3,maxlen=50" yaml:"name"`
-	Environment string `validate:"oneof=dev|staging|prod" yaml:"environment"`
-	Version     string `validate:"required,regex=^v[0-9]+\\.[0-9]+\\.[0-9]+$" yaml:"version"`
+	Name        string    `yaml:"name" validate:"required,minlen=3,maxlen=50"`
+	Environment string    `yaml:"environment" validate:"oneof=dev|staging|prod"`
+	Version     string    `yaml:"version" validate:"required,regex=^v[0-9]+\\.[0-9]+\\.[0-9]+$"`
+	Sub         SubConfig `yaml:"sub" validate:"required"`
+}
+
+type SubConfig struct {
+	Foo string `yaml:"foo" validate:"required,minlen=3"`
 }

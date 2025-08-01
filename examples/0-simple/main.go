@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/mateothegreat/go-config/config"
 	"github.com/mateothegreat/go-config/plugins/sources"
 	"github.com/mateothegreat/go-config/test"
 	"github.com/mateothegreat/go-config/validation"
+	"github.com/sanity-io/litter"
 )
 
 // init sets up the multilog logger for the test package.
@@ -27,5 +27,5 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	fmt.Println(cfg)
+	litter.Dump(cfg)
 }
