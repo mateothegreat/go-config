@@ -6,8 +6,15 @@ import (
 
 	"github.com/mateothegreat/go-config/config"
 	"github.com/mateothegreat/go-config/plugins/sources"
+	"github.com/mateothegreat/go-config/test"
 	"github.com/mateothegreat/go-config/validation"
 )
+
+// init sets up the multilog logger for the test package.
+// This can be ignored for your own implementations.
+func init() {
+	test.Setup()
+}
 
 func main() {
 	cfg := &AppConfig{}
