@@ -94,6 +94,16 @@ func (h *structHydrator) addValidKeysRecursive(typ reflect.Type, validKeys map[s
 		if field.Anonymous && field.Type.Kind() == reflect.Struct {
 			// Recursively add keys from embedded struct
 			h.addValidKeysRecursive(field.Type, validKeys)
+		} else if field.Type.Kind() == reflect.Struct {
+			// Regular nested struct field - add its key and recurse
+			key := h.getFieldKey(field)
+			validKeys[key] = true
+			h.addValidKeysRecursive(field.Type, validKeys)
+		} else if field.Type.Kind() == reflect.Ptr && field.Type.Elem().Kind() == reflect.Struct {
+			// Pointer to struct field - add its key and recurse into the struct type
+			key := h.getFieldKey(field)
+			validKeys[key] = true
+			h.addValidKeysRecursive(field.Type.Elem(), validKeys)
 		} else {
 			// Regular field - add its key
 			key := h.getFieldKey(field)
@@ -186,6 +196,11 @@ func (h *structHydrator) setFieldValue(dest reflect.Value, raw any, fieldName st
 
 	// Handle nested struct conversion
 	if dest.Kind() == reflect.Struct && src.Kind() == reflect.Map {
+		return h.hydrateNestedStruct(dest, raw, fieldName)
+	}
+
+	// Handle pointer to struct conversion
+	if dest.Kind() == reflect.Ptr && src.Kind() == reflect.Map {
 		return h.hydrateNestedStruct(dest, raw, fieldName)
 	}
 

@@ -86,11 +86,32 @@ func (uv *UnifiedValidator) validateWithReflection(data any) error {
 
 		validateTag := field.Tag.Get("validate")
 		if validateTag == "" {
+			// For nested structs (including pointer to struct), recursively validate
+			if field.Type.Kind() == reflect.Struct {
+				if err := uv.validateWithReflection(fieldValue.Interface()); err != nil {
+					collector.Add(field.Name, err.Error())
+				}
+			} else if field.Type.Kind() == reflect.Ptr && !fieldValue.IsNil() && field.Type.Elem().Kind() == reflect.Struct {
+				if err := uv.validateWithReflection(fieldValue.Interface()); err != nil {
+					collector.Add(field.Name, err.Error())
+				}
+			}
 			continue
 		}
 
 		rules := parseValidationRules(validateTag)
 		uv.validateFieldWithReflection(field.Name, fieldValue, rules, collector)
+
+		// For nested structs (including pointer to struct), recursively validate
+		if field.Type.Kind() == reflect.Struct {
+			if err := uv.validateWithReflection(fieldValue.Interface()); err != nil {
+				collector.Add(field.Name, err.Error())
+			}
+		} else if field.Type.Kind() == reflect.Ptr && !fieldValue.IsNil() && field.Type.Elem().Kind() == reflect.Struct {
+			if err := uv.validateWithReflection(fieldValue.Interface()); err != nil {
+				collector.Add(field.Name, err.Error())
+			}
+		}
 
 		if uv.config.FailFast && collector.HasErrors() {
 			break
@@ -127,6 +148,16 @@ func (uv *UnifiedValidator) validateWithFast(data any) error {
 
 		validateTag := field.Tag.Get("validate")
 		if validateTag == "" {
+			// For nested structs (including pointer to struct), recursively validate
+			if field.Type.Kind() == reflect.Struct {
+				if err := uv.validateWithFast(fieldValue.Interface()); err != nil {
+					allErrors = append(allErrors, fmt.Sprintf("%s: %s", field.Name, err.Error()))
+				}
+			} else if field.Type.Kind() == reflect.Ptr && !fieldValue.IsNil() && field.Type.Elem().Kind() == reflect.Struct {
+				if err := uv.validateWithFast(fieldValue.Interface()); err != nil {
+					allErrors = append(allErrors, fmt.Sprintf("%s: %s", field.Name, err.Error()))
+				}
+			}
 			continue
 		}
 
@@ -134,7 +165,18 @@ func (uv *UnifiedValidator) validateWithFast(data any) error {
 		fieldErrors := uv.validateFieldByType(field.Name, fieldValue, rules)
 		allErrors = append(allErrors, fieldErrors...)
 
-		if uv.config.FailFast && len(fieldErrors) > 0 {
+		// For nested structs (including pointer to struct), recursively validate
+		if field.Type.Kind() == reflect.Struct {
+			if err := uv.validateWithFast(fieldValue.Interface()); err != nil {
+				allErrors = append(allErrors, fmt.Sprintf("%s: %s", field.Name, err.Error()))
+			}
+		} else if field.Type.Kind() == reflect.Ptr && !fieldValue.IsNil() && field.Type.Elem().Kind() == reflect.Struct {
+			if err := uv.validateWithFast(fieldValue.Interface()); err != nil {
+				allErrors = append(allErrors, fmt.Sprintf("%s: %s", field.Name, err.Error()))
+			}
+		}
+
+		if uv.config.FailFast && len(allErrors) > 0 {
 			break
 		}
 	}
@@ -251,6 +293,12 @@ func registerBuiltInValidators(registry ValidatorRegistry) {
 		case reflect.Ptr, reflect.Interface, reflect.Slice, reflect.Map, reflect.Chan:
 			if value.IsNil() {
 				return fmt.Errorf("field '%s' is required", fieldName)
+			}
+			// For pointers to structs, we also need to validate that the struct itself is valid
+			if value.Kind() == reflect.Ptr && !value.IsNil() && value.Elem().Kind() == reflect.Struct {
+				// The pointer is not nil, which satisfies the "required" constraint
+				// The actual struct validation will be handled by recursive validation
+				return nil
 			}
 		case reflect.Array:
 			// Arrays are never nil, but we can check if all elements are zero
