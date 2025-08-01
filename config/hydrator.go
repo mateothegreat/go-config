@@ -33,6 +33,11 @@ func (h *structHydrator) Hydrate(data map[string]any, target any) error {
 		return fmt.Errorf("target must be a pointer to struct, got %v", val.Kind())
 	}
 
+	return h.hydrateStruct(val, data)
+}
+
+// hydrateStruct handles struct hydration, including embedded structs
+func (h *structHydrator) hydrateStruct(val reflect.Value, data map[string]any) error {
 	typ := val.Type()
 	for i := 0; i < val.NumField(); i++ {
 		field := typ.Field(i)
@@ -42,6 +47,16 @@ func (h *structHydrator) Hydrate(data map[string]any, target any) error {
 			continue
 		}
 
+		// Handle embedded struct fields
+		if field.Anonymous && field.Type.Kind() == reflect.Struct {
+			// For embedded structs, recursively hydrate with the same data map
+			if err := h.hydrateStruct(fieldValue, data); err != nil {
+				return fmt.Errorf("failed to hydrate embedded struct %s: %w", field.Name, err)
+			}
+			continue
+		}
+
+		// Handle regular fields
 		key := h.getFieldKey(field)
 		if raw, exists := data[key]; exists {
 			if err := h.setFieldValue(fieldValue, raw, field.Name); err != nil {
@@ -66,14 +81,25 @@ func (h *structHydrator) GetValidKeys(target any) map[string]bool {
 		return validKeys
 	}
 
-	typ := val.Type()
-	for i := 0; i < val.NumField(); i++ {
-		field := typ.Field(i)
-		key := h.getFieldKey(field)
-		validKeys[key] = true
-	}
-
+	h.addValidKeysRecursive(val.Type(), validKeys)
 	return validKeys
+}
+
+// addValidKeysRecursive recursively adds valid keys from struct fields, including embedded structs
+func (h *structHydrator) addValidKeysRecursive(typ reflect.Type, validKeys map[string]bool) {
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		
+		// Check if this is an embedded struct field
+		if field.Anonymous && field.Type.Kind() == reflect.Struct {
+			// Recursively add keys from embedded struct
+			h.addValidKeysRecursive(field.Type, validKeys)
+		} else {
+			// Regular field - add its key
+			key := h.getFieldKey(field)
+			validKeys[key] = true
+		}
+	}
 }
 
 // getFieldKey determines the configuration key for a struct field
@@ -221,12 +247,11 @@ func (h *structHydrator) hydrateNestedStruct(dest reflect.Value, raw any, fieldN
 		if dest.IsNil() {
 			dest.Set(reflect.New(dest.Type().Elem()))
 		}
-		return h.Hydrate(dataMap, dest.Interface())
+		return h.hydrateStruct(dest.Elem(), dataMap)
 	}
 
-	// For non-pointer structs, we need to create a pointer temporarily
-	ptr := dest.Addr()
-	return h.Hydrate(dataMap, ptr.Interface())
+	// For non-pointer structs, hydrate directly
+	return h.hydrateStruct(dest, dataMap)
 }
 
 // convertSlice handles slice conversion
