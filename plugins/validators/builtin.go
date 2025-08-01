@@ -6,7 +6,6 @@ import (
 	"net"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 // IPAddressValidator validates IP addresses
@@ -75,31 +74,6 @@ func (v *UUIDValidator) SupportedTypes() []string {
 	return []string{"string"}
 }
 
-// CreditCardValidator validates credit card numbers using Luhn algorithm
-type CreditCardValidator struct{}
-
-func (v *CreditCardValidator) Name() string { return "creditcard" }
-
-func (v *CreditCardValidator) Validate(field interface{}) error {
-	str, ok := field.(string)
-	if !ok {
-		return fmt.Errorf("credit card validation requires string input")
-	}
-
-	// Remove spaces and dashes
-	clean := strings.ReplaceAll(strings.ReplaceAll(str, " ", ""), "-", "")
-
-	if !isValidCreditCard(clean) {
-		return fmt.Errorf("invalid credit card number")
-	}
-
-	return nil
-}
-
-func (v *CreditCardValidator) SupportedTypes() []string {
-	return []string{"string"}
-}
-
 // PhoneValidator validates phone numbers
 type PhoneValidator struct{}
 
@@ -151,20 +125,6 @@ func (f *UUIDValidatorFactory) Metadata() PluginMetadata {
 		Author:      "go-config",
 		Type:        "validator",
 		Features:    []string{"format", "identifier"},
-	}
-}
-
-type CreditCardValidatorFactory struct{}
-
-func (f *CreditCardValidatorFactory) Create() ValidatorPlugin { return &CreditCardValidator{} }
-func (f *CreditCardValidatorFactory) Metadata() PluginMetadata {
-	return PluginMetadata{
-		Name:        "creditcard",
-		Version:     "1.0.0",
-		Description: "Validates credit card numbers using Luhn algorithm",
-		Author:      "go-config",
-		Type:        "validator",
-		Features:    []string{"financial", "luhn"},
 	}
 }
 

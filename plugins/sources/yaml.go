@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/mateothegreat/go-multilog/multilog"
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,9 +48,22 @@ func (y *YAMLSource) Name() string {
 func (y *YAMLSource) Load(ctx context.Context) (map[string]any, error) {
 	raw, err := os.ReadFile(y.Path)
 	if err != nil {
+		multilog.Debug("go-config.sources.yaml", "failed to read YAML file", map[string]any{
+			"error": err,
+			"path":  y.Path,
+		})
 		return nil, err
 	}
+
 	var data map[string]any
+
 	err = yaml.Unmarshal(raw, &data)
+	if err != nil {
+		multilog.Debug("go-config.sources.yaml", "failed to unmarshal YAML file", map[string]any{
+			"error": err,
+			"path":  y.Path,
+		})
+		return nil, err
+	}
 	return data, err
 }

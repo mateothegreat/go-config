@@ -71,6 +71,5 @@ func init() {
 	// Register validator plugin factories
 	RegisterValidatorFactory("ip", &validatorFactoryAdapter{factory: &validators.IPValidatorFactory{}})
 	RegisterValidatorFactory("uuid", &validatorFactoryAdapter{factory: &validators.UUIDValidatorFactory{}})
-	RegisterValidatorFactory("creditcard", &validatorFactoryAdapter{factory: &validators.CreditCardValidatorFactory{}})
 	RegisterValidatorFactory("phone", &validatorFactoryAdapter{factory: &validators.PhoneValidatorFactory{}})
 }

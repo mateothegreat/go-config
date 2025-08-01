@@ -6,6 +6,7 @@ import (
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
 	"github.com/mateothegreat/go-config/validation"
+	"github.com/mateothegreat/go-multilog/multilog"
 )
 
 // FluentBuilder provides a fluent interface for configuration building
@@ -50,7 +51,7 @@ func (fb *FluentBuilder) WithValidator(validator validation.Validator) Builder {
 }
 
 // WithValidationStrategy sets the validation strategy
-func (fb *FluentBuilder) WithValidationStrategy(strategy validation.ValidationStrategy) Builder {
+func (fb *FluentBuilder) WithValidationStrategy(strategy validation.Strategy) Builder {
 	fb.config.ValidationStrategy = strategy
 	return fb
 }
@@ -131,7 +132,7 @@ func (pb *PluginBuilder) WithValidator(v validation.Validator) *PluginBuilder {
 }
 
 // WithValidationStrategy sets the validation strategy
-func (pb *PluginBuilder) WithValidationStrategy(strategy validation.ValidationStrategy) *PluginBuilder {
+func (pb *PluginBuilder) WithValidationStrategy(strategy validation.Strategy) *PluginBuilder {
 	pb.config.ValidationStrategy = strategy
 	return pb
 }
@@ -155,6 +156,12 @@ func (pb *PluginBuilder) Build(target any) error {
 	if pb.defaults != nil {
 		loader.SetDefaults(pb.defaults)
 	}
+
+	multilog.Debug("go-config.builder.Build", "building config loader", map[string]any{
+		"defaults":  pb.defaults,
+		"target":    target,
+		"validator": pb.validator,
+	})
 
 	// Auto-detect validation strategy if no validator is set
 	if pb.validator == nil {
@@ -185,10 +192,31 @@ func (pb *PluginBuilder) Build(target any) error {
 	for _, pluginLoader := range pb.pluginLoaders {
 		if plugin, err := pluginLoader(); err == nil {
 			loader.Use(plugin)
+			multilog.Debug("go-config.builder.Build", "loaded plugin", map[string]any{
+				"name":   plugin.Name(),
+				"plugin": plugin,
+			})
+		} else {
+			multilog.Debug("go-config.builder.Build", "failed to add plugin", map[string]any{
+				"name":  plugin.Name(),
+				"error": err,
+			})
 		}
 	}
 
-	return loader.Load(context.Background())
+	err := loader.Load(context.Background())
+	if err != nil {
+		multilog.Debug("go-config.builder.Build", "failed to load config", map[string]any{
+			"error": err,
+		})
+		return err
+	}
+
+	multilog.Debug("go-config.builder.Build", "loaded config", map[string]any{
+		"target": target,
+	})
+
+	return nil
 }
 
 // Legacy builder support for backwards compatibility

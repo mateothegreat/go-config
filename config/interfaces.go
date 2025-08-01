@@ -34,7 +34,7 @@ type Builder interface {
 	// WithValidator sets a custom validator
 	WithValidator(validator validation.Validator) Builder
 	// WithValidationStrategy sets the validation strategy
-	WithValidationStrategy(strategy validation.ValidationStrategy) Builder
+	WithValidationStrategy(strategy validation.Strategy) Builder
 	// Build loads configuration into the target struct
 	Build(target any) error
 }
@@ -54,7 +54,7 @@ const (
 // LoaderConfig configures loader behavior
 type LoaderConfig struct {
 	HydrationStrategy     HydrationStrategy
-	ValidationStrategy    validation.ValidationStrategy
+	ValidationStrategy    validation.Strategy
 	FailOnSourceError     bool
 	FailOnValidationError bool
 	AllowUnknownFields    bool

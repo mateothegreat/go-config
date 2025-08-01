@@ -20,7 +20,7 @@ func NewValidationDetector(config ValidatorConfig) *ValidationDetector {
 }
 
 // DetectStrategy determines the best validation strategy for the given data
-func (vd *ValidationDetector) DetectStrategy(data any) ValidationStrategy {
+func (vd *ValidationDetector) DetectStrategy(data any) Strategy {
 	if vd.config.Strategy != StrategyAuto {
 		return vd.config.Strategy
 	}
@@ -104,7 +104,7 @@ type ValidationInfo struct {
 	FullTypeName        string
 	HasGeneratedCode    bool
 	HasValidationTags   bool
-	RecommendedStrategy ValidationStrategy
+	RecommendedStrategy Strategy
 	ImplementsInterface bool
 }
 

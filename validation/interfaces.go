@@ -43,23 +43,23 @@ type GeneratedValidatorRegistry interface {
 	ValidateWithGenerated(data any) error
 }
 
-// ValidationStrategy determines which validation approach to use
-type ValidationStrategy int
+// Strategy determines which validation approach to use
+type Strategy string
 
 const (
 	// StrategyAuto automatically detects the best validation method
-	StrategyAuto ValidationStrategy = iota
+	StrategyAuto Strategy = "auto"
 	// StrategyGenerated forces use of generated validation
-	StrategyGenerated
+	StrategyGenerated Strategy = "generated"
 	// StrategyReflection forces use of reflection-based validation
-	StrategyReflection
+	StrategyReflection Strategy = "reflection"
 	// StrategyFast uses optimized type-specific validation
-	StrategyFast
+	StrategyFast Strategy = "fast"
 )
 
 // ValidatorConfig configures validation behavior
 type ValidatorConfig struct {
-	Strategy         ValidationStrategy
+	Strategy         Strategy
 	AllowUnknownTags bool
 	FailFast         bool
 	CollectAllErrors bool
