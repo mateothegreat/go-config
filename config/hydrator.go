@@ -62,6 +62,13 @@ func (h *structHydrator) hydrateStruct(val reflect.Value, data map[string]any) e
 			if err := h.setFieldValue(fieldValue, raw, field.Name); err != nil {
 				return fmt.Errorf("failed to set field %s: %w", field.Name, err)
 			}
+		} else {
+			// Check for default value if no data was provided
+			if defaultValue := field.Tag.Get("default"); defaultValue != "" {
+				if err := h.setDefaultValue(fieldValue, defaultValue, field.Name); err != nil {
+					return fmt.Errorf("failed to set default value for field %s: %w", field.Name, err)
+				}
+			}
 		}
 	}
 
@@ -215,6 +222,11 @@ func (h *structHydrator) setFieldValue(dest reflect.Value, raw any, fieldName st
 	}
 
 	return fmt.Errorf("field %q type mismatch: cannot convert %v (%v) to %v", fieldName, raw, src.Type(), destType)
+}
+
+// setDefaultValue sets a default value from a string tag to a field
+func (h *structHydrator) setDefaultValue(dest reflect.Value, defaultStr, fieldName string) error {
+	return h.convertStringToType(dest, defaultStr, fieldName)
 }
 
 // convertStringToType converts string values to the target type

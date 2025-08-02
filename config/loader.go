@@ -19,9 +19,8 @@ type ConfigLoader struct {
 	hydrator         Hydrator
 	validator        validation.Validator
 	defaultValidator validation.Validator
-	errorCorrelator  *errors.ErrorCorrelator
+	loadError        *errors.ConfigLoadError
 	merged           map[string]any
-	errors           []error
 }
 
 // NewConfigLoader creates a loader for a target struct
@@ -33,9 +32,8 @@ func NewConfigLoader(target any) Loader {
 		sourceManager:    NewSourceManager(),
 		hydrator:         NewHydrator(config.HydrationStrategy),
 		defaultValidator: validation.NewValidator(),
-		errorCorrelator:  errors.NewErrorCorrelator(),
+		loadError:        errors.NewConfigLoadError(),
 		merged:           make(map[string]any),
-		errors:           make([]error, 0),
 	}
 }
 
@@ -47,9 +45,8 @@ func NewConfigLoaderWithConfig(target any, config LoaderConfig) Loader {
 		sourceManager:    NewSourceManager(),
 		hydrator:         NewHydrator(config.HydrationStrategy),
 		defaultValidator: validation.NewValidator(),
-		errorCorrelator:  errors.NewErrorCorrelator(),
+		loadError:        errors.NewConfigLoadError(),
 		merged:           make(map[string]any),
-		errors:           make([]error, 0),
 	}
 }
 
@@ -96,22 +93,20 @@ func (cl *ConfigLoader) Load(ctx context.Context) error {
 	cl.mu.Lock()
 	defer cl.mu.Unlock()
 
-	// Reset errors and correlator
-	cl.errors = make([]error, 0)
-	cl.errorCorrelator = errors.NewErrorCorrelator()
+	// Reset error tracker
+	cl.loadError = errors.NewConfigLoadError()
 
 	// Load from all sources
 	sourceData, sourceErrors := cl.sourceManager.LoadAll(ctx)
 	if sourceErrors != nil && sourceErrors.HasErrors() {
-		// Add source errors to correlator
+		// Add source errors
 		for source, err := range sourceErrors.GetSourceErrors() {
-			cl.errorCorrelator.AddSourceError(source, err)
+			cl.loadError.AddSourceError(source, err)
 		}
 
 		if cl.config.FailOnSourceError {
-			return cl.createCorrelatedError()
+			return cl.loadError
 		}
-		cl.errors = append(cl.errors, sourceErrors)
 	}
 
 	// Merge source data
@@ -124,39 +119,36 @@ func (cl *ConfigLoader) Load(ctx context.Context) error {
 
 	// Hydrate target struct
 	if err := cl.hydrator.Hydrate(cl.merged, cl.target); err != nil {
-		cl.errors = append(cl.errors, err)
+		cl.loadError.AddHydrationError(err.Error())
 		if cl.config.FailOnValidationError {
-			return cl.createCorrelatedError()
+			return cl.loadError
 		}
 	}
 
 	// Validate
 	validator := cl.getValidator()
 	if err := validator.Validate(cl.target); err != nil {
-		// Add validation errors to correlator
+		// Add validation errors
 		if validationErrs, ok := errors.AsValidationErrors(err); ok {
-			cl.errorCorrelator.AddValidationErrors(validationErrs)
+			for _, validationErr := range validationErrs {
+				cl.loadError.AddHydrationError(validationErr.Error())
+			}
+		} else {
+			// Handle other validation error types
+			cl.loadError.AddHydrationError(err.Error())
 		}
 
-		cl.errors = append(cl.errors, err)
 		if cl.config.FailOnValidationError {
-			return cl.createCorrelatedError()
+			return cl.loadError
 		}
 	}
 
-	// Return correlated error if we have any errors but aren't failing fast
-	if len(cl.errors) > 0 {
-		return cl.createCorrelatedError()
+	// Return error only if we actually have errors
+	if cl.loadError.HasErrors() {
+		return cl.loadError
 	}
 
 	return nil
-}
-
-// createCorrelatedError creates a correlated error from collected errors
-func (cl *ConfigLoader) createCorrelatedError() error {
-	correlations := cl.errorCorrelator.Correlate()
-	summary := cl.errorCorrelator.GetCorrelationSummary()
-	return errors.NewCorrelatedError(correlations, summary)
 }
 
 // Sources returns the names of sources used
@@ -178,14 +170,14 @@ func (cl *ConfigLoader) Inspect() map[string]any {
 	return result
 }
 
-// Errors returns all accumulated errors
-func (cl *ConfigLoader) Errors() []error {
+// Errors returns the current load error if any
+func (cl *ConfigLoader) Errors() error {
 	cl.mu.RLock()
 	defer cl.mu.RUnlock()
-	// Return a copy
-	result := make([]error, len(cl.errors))
-	copy(result, cl.errors)
-	return result
+	if cl.loadError != nil && cl.loadError.HasErrors() {
+		return cl.loadError
+	}
+	return nil
 }
 
 // getValidator returns the appropriate validator with auto-detection

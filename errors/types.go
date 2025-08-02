@@ -161,3 +161,99 @@ func AsConfigurationError(err error) (ConfigurationError, bool) {
 	}
 	return ConfigurationError{}, false
 }
+
+// ConfigLoadError represents a comprehensive configuration loading error
+type ConfigLoadError struct {
+	SourceErrors    map[string]error `json:"source_errors,omitempty"`
+	HydrationErrors *[]string        `json:"hydration_errors,omitempty"`
+}
+
+// NewConfigLoadError creates a new configuration load error
+func NewConfigLoadError() *ConfigLoadError {
+	return &ConfigLoadError{
+		SourceErrors:    make(map[string]error),
+		HydrationErrors: &[]string{},
+	}
+}
+
+// AddSourceError adds a source-specific error
+func (cle *ConfigLoadError) AddSourceError(source string, err error) {
+	if cle.SourceErrors == nil {
+		cle.SourceErrors = make(map[string]error)
+	}
+	cle.SourceErrors[source] = err
+}
+
+// AddHydrationError adds a hydration error
+func (cle *ConfigLoadError) AddHydrationError(message string) {
+	*cle.HydrationErrors = append(*cle.HydrationErrors, message)
+}
+
+// HasErrors returns true if there are any errors
+func (cle *ConfigLoadError) HasErrors() bool {
+	return len(cle.SourceErrors) > 0 || len(*cle.HydrationErrors) > 0
+}
+
+// Error implements the error interface with clear, readable messages
+func (cle *ConfigLoadError) Error() string {
+	if !cle.HasErrors() {
+		return ""
+	}
+
+	var parts []string
+
+	// Add source errors
+	if len(cle.SourceErrors) > 0 {
+		var sourceMessages []string
+		for source, err := range cle.SourceErrors {
+			sourceMessages = append(sourceMessages, fmt.Sprintf("%s: %v", source, err))
+		}
+		parts = append(parts, fmt.Sprintf("source errors: %s", strings.Join(sourceMessages, ", ")))
+	}
+
+	// Add hydration errors
+	if len(*cle.HydrationErrors) > 0 {
+		parts = append(parts, fmt.Sprintf("hydration errors: %s", strings.Join(*cle.HydrationErrors, ", ")))
+	}
+
+	return fmt.Sprintf("configuration loading failed: %s", strings.Join(parts, "; "))
+}
+
+// GetSuggestions returns helpful suggestions for fixing the errors
+func (cle *ConfigLoadError) GetSuggestions() []string {
+	var suggestions []string
+
+	// Source error suggestions
+	for source, err := range cle.SourceErrors {
+		errMsg := strings.ToLower(err.Error())
+		switch {
+		case strings.Contains(errMsg, "not found") || strings.Contains(errMsg, "no such file"):
+			suggestions = append(suggestions, fmt.Sprintf("Ensure the %s configuration file exists and is accessible", source))
+		case strings.Contains(errMsg, "permission"):
+			suggestions = append(suggestions, fmt.Sprintf("Check file permissions for the %s configuration source", source))
+		case strings.Contains(errMsg, "parse") || strings.Contains(errMsg, "unmarshal"):
+			suggestions = append(suggestions, fmt.Sprintf("Fix syntax errors in the %s configuration format", source))
+		default:
+			suggestions = append(suggestions, fmt.Sprintf("Review the %s configuration source", source))
+		}
+	}
+
+	// Hydration error suggestions
+	for _, hydrationErr := range *cle.HydrationErrors {
+		msg := strings.ToLower(hydrationErr)
+		switch {
+		case strings.Contains(msg, "required"):
+			suggestions = append(suggestions, fmt.Sprintf("Set the required '%s' field in your configuration", hydrationErr))
+		case strings.Contains(msg, "format") || strings.Contains(msg, "pattern"):
+			suggestions = append(suggestions, fmt.Sprintf("Check the format of the '%s' field", hydrationErr))
+		case strings.Contains(msg, "range") || strings.Contains(msg, "min") || strings.Contains(msg, "max"):
+			suggestions = append(suggestions, fmt.Sprintf("Ensure the '%s' field value is within the allowed range", hydrationErr))
+		case strings.Contains(msg, "email"):
+			suggestions = append(suggestions, fmt.Sprintf("Use a valid email format for the '%s' field", hydrationErr))
+		default:
+			suggestions = append(suggestions, fmt.Sprintf("Review the '%s' field configuration", hydrationErr))
+		}
+	}
+
+	return suggestions
+}

@@ -23,8 +23,8 @@ type Loader interface {
 	Sources() []string
 	// Inspect returns merged configuration data
 	Inspect() map[string]any
-	// Errors returns all accumulated errors
-	Errors() []error
+	// Errors returns the current load error if any
+	Errors() error
 }
 
 // Builder provides a fluent interface for configuration building
