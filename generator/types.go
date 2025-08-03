@@ -17,6 +17,7 @@ type GeneratorConfig struct {
 	Multi       bool
 	Cache       bool
 	Verbose     bool
+	UseAST      bool // Use AST-based code generation instead of templates
 }
 
 // ValidationRule represents a single validation rule

@@ -3,265 +3,116 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
-	goconfig "github.com/mateothegreat/go-config"
+	"github.com/mateothegreat/go-config/generator"
 )
 
 var (
 	inputDir    = flag.String("input", ".", "Input directory to scan for structs")
-	outputFile  = flag.String("output", "validation_generated.go", "Output file for generated validation code")
+	outputDir   = flag.String("output", ".", "Output directory for generated files")
 	packageName = flag.String("package", "", "Package name for generated code (auto-detected if empty)")
-	structName  = flag.String("struct", "", "Specific struct name to generate for (generates for all if empty)")
+	structNames = flag.String("structs", "", "Comma-separated list of struct names to generate for (all if empty)")
 	verbose     = flag.Bool("verbose", false, "Enable verbose output")
+	useAST      = flag.Bool("ast", true, "Use AST-based code generation (recommended)")
+	multi       = flag.Bool("multi", false, "Generate separate files for each struct")
+	dryRun      = flag.Bool("dry-run", false, "Print generated code without writing files")
+	cache       = flag.Bool("cache", false, "Enable AST caching for better performance")
 )
 
 func main() {
 	flag.Parse()
 
-	if *verbose {
-		log.Println("🔧 go-config-gen - Zero Reflection Validation Code Generator")
-		log.Printf("   Input directory: %s", *inputDir)
-		log.Printf("   Output file: %s", *outputFile)
-		log.Printf("   Package: %s", *packageName)
-		log.Printf("   Struct filter: %s", *structName)
-	}
-
-	// Find all Go files in the input directory
-	goFiles, err := findGoFiles(*inputDir)
-	if err != nil {
-		log.Fatalf("Error finding Go files: %v", err)
-	}
-
-	if *verbose {
-		log.Printf("📁 Found %d Go files", len(goFiles))
-	}
-
-	// Parse files and find structs with validation tags
-	structs, detectedPackage, err := findValidatedStructs(goFiles)
-	if err != nil {
-		log.Fatalf("Error parsing Go files: %v", err)
-	}
-
-	if len(structs) == 0 {
-		log.Println("⚠️  No structs with validation tags found")
-		return
-	}
-
-	// Use detected package name if not specified
-	targetPackage := *packageName
-	if targetPackage == "" {
-		targetPackage = detectedPackage
-	}
-
-	if *verbose {
-		log.Printf("🏗️  Found %d structs with validation tags", len(structs))
-		for _, s := range structs {
-			log.Printf("   - %s", s.Name)
+	// Parse struct names if provided
+	var structs []string
+	if *structNames != "" {
+		structs = strings.Split(*structNames, ",")
+		for i := range structs {
+			structs[i] = strings.TrimSpace(structs[i])
 		}
+	}
+
+	// Create generator options
+	opts := []generator.GeneratorOption{
+		generator.WithInputDir(*inputDir),
+		generator.WithOutputDir(*outputDir),
+		generator.WithVerbose(*verbose),
+		generator.WithDryRun(*dryRun),
+		generator.WithMulti(*multi),
+		generator.WithCache(*cache),
+	}
+
+	if *packageName != "" {
+		opts = append(opts, generator.WithPackage(*packageName))
+	}
+
+	if len(structs) > 0 {
+		opts = append(opts, generator.WithStructs(structs...))
+	}
+
+	// Create and run generator
+	gen := generator.NewGenerator(opts...)
+
+	// Log configuration if verbose
+	if *verbose {
+		fmt.Println("🔧 go-config-gen - Zero Reflection Validation Code Generator")
+		fmt.Printf("   Mode: %s\n", func() string {
+			if *useAST {
+				return "AST-based (high-performance)"
+			}
+			return "Template-based (deprecated)"
+		}())
+		fmt.Printf("   Input directory: %s\n", *inputDir)
+		fmt.Printf("   Output directory: %s\n", *outputDir)
+		if *packageName != "" {
+			fmt.Printf("   Package: %s\n", *packageName)
+		}
+		if len(structs) > 0 {
+			fmt.Printf("   Structs: %s\n", strings.Join(structs, ", "))
+		}
+		fmt.Printf("   Multi-file: %v\n", *multi)
+		fmt.Printf("   Dry run: %v\n", *dryRun)
+		fmt.Printf("   Cache: %v\n", *cache)
 	}
 
 	// Generate validation code
-	generator := goconfig.NewValidatorGenerator(targetPackage)
-	var generatedMethods []string
-
-	for _, structInfo := range structs {
-		// Filter by struct name if specified
-		if *structName != "" && structInfo.Name != *structName {
-			continue
-		}
-
-		if *verbose {
-			log.Printf("⚙️  Generating validation for %s", structInfo.Name)
-		}
-
-		validationCode, err := generator.GenerateValidatorCode(structInfo.Code)
-		if err != nil {
-			log.Printf("❌ Error generating validation for %s: %v", structInfo.Name, err)
-			continue
-		}
-
-		generatedMethods = append(generatedMethods, validationCode)
+	if err := gen.Generate(); err != nil {
+		log.Fatalf("Error generating validation code: %v", err)
 	}
 
-	if len(generatedMethods) == 0 {
-		log.Println("⚠️  No validation methods generated")
-		return
+	// Clean up cache if not enabled
+	if !*cache {
+		gen.ClearCache()
 	}
 
-	// Write the generated code to output file
-	err = writeGeneratedCode(*outputFile, targetPackage, generatedMethods)
-	if err != nil {
-		log.Fatalf("Error writing generated code: %v", err)
-	}
-
-	if *verbose {
-		log.Printf("✅ Generated validation code written to %s", *outputFile)
-		log.Printf("🎯 %d validation methods created", len(generatedMethods))
-	} else {
-		fmt.Printf("Generated %d validation methods in %s\n", len(generatedMethods), *outputFile)
+	if !*dryRun && !*verbose {
+		fmt.Println("✅ Validation code generated successfully")
 	}
 }
 
-type StructInfo struct {
-	Name string
-	Code string
-}
-
-func findGoFiles(dir string) ([]string, error) {
-	var goFiles []string
-
-	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		// Skip vendor and hidden directories
-		if d.IsDir() && (strings.HasPrefix(d.Name(), ".") || d.Name() == "vendor") {
-			return filepath.SkipDir
-		}
-
-		// Only include .go files, excluding test files and generated files
-		if strings.HasSuffix(path, ".go") &&
-			!strings.HasSuffix(path, "_test.go") &&
-			!strings.Contains(path, "generated") {
-			goFiles = append(goFiles, path)
-		}
-
-		return nil
-	})
-
-	return goFiles, err
-}
-
-func findValidatedStructs(goFiles []string) ([]StructInfo, string, error) {
-	var structs []StructInfo
-	var packageName string
-
-	for _, file := range goFiles {
-		fset := token.NewFileSet()
-		node, err := parser.ParseFile(fset, file, nil, parser.ParseComments)
-		if err != nil {
-			continue // Skip files that can't be parsed
-		}
-
-		// Get package name from first file
-		if packageName == "" {
-			packageName = node.Name.Name
-		}
-
-		// Find structs with validation tags
-		ast.Inspect(node, func(n ast.Node) bool {
-			if ts, ok := n.(*ast.TypeSpec); ok {
-				if st, ok := ts.Type.(*ast.StructType); ok {
-					if hasValidationTags(st) {
-						structCode := generateStructCode(ts, st)
-						structs = append(structs, StructInfo{
-							Name: ts.Name.Name,
-							Code: structCode,
-						})
-					}
-				}
-			}
-			return true
-		})
+// init ensures the generator uses AST mode by default
+func init() {
+	// Override the default value after parsing
+	oldUsage := flag.Usage
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "go-config-gen - Generate zero-reflection validation code\n\n")
+		fmt.Fprintf(os.Stderr, "This tool generates high-performance validation code that integrates with\n")
+		fmt.Fprintf(os.Stderr, "the go-validation library without using runtime reflection.\n\n")
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "  go-config-gen [flags]\n")
+		fmt.Fprintf(os.Stderr, "  go generate (when using //go:generate directive)\n\n")
+		fmt.Fprintf(os.Stderr, "Examples:\n")
+		fmt.Fprintf(os.Stderr, "  # Generate for all structs in current directory\n")
+		fmt.Fprintf(os.Stderr, "  go-config-gen\n\n")
+		fmt.Fprintf(os.Stderr, "  # Generate for specific structs\n")
+		fmt.Fprintf(os.Stderr, "  go-config-gen -structs ServerConfig,DatabaseConfig\n\n")
+		fmt.Fprintf(os.Stderr, "  # Generate separate files for each struct\n")
+		fmt.Fprintf(os.Stderr, "  go-config-gen -multi\n\n")
+		fmt.Fprintf(os.Stderr, "  # Preview generated code without writing files\n")
+		fmt.Fprintf(os.Stderr, "  go-config-gen -dry-run -verbose\n\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		oldUsage()
 	}
-
-	return structs, packageName, nil
-}
-
-func hasValidationTags(st *ast.StructType) bool {
-	for _, field := range st.Fields.List {
-		if field.Tag != nil {
-			tag := strings.Trim(field.Tag.Value, "`")
-			if strings.Contains(tag, "validate:") {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func generateStructCode(ts *ast.TypeSpec, st *ast.StructType) string {
-	var builder strings.Builder
-
-	builder.WriteString(fmt.Sprintf("type %s struct {\n", ts.Name.Name))
-
-	for _, field := range st.Fields.List {
-		if len(field.Names) == 0 {
-			continue // Skip embedded fields
-		}
-
-		fieldName := field.Names[0].Name
-		fieldType := getFieldTypeName(field.Type)
-
-		builder.WriteString(fmt.Sprintf("\t%s %s", fieldName, fieldType))
-
-		if field.Tag != nil {
-			builder.WriteString(" " + field.Tag.Value)
-		}
-
-		builder.WriteString("\n")
-	}
-
-	builder.WriteString("}")
-	return builder.String()
-}
-
-func getFieldTypeName(expr ast.Expr) string {
-	switch t := expr.(type) {
-	case *ast.Ident:
-		return t.Name
-	case *ast.StarExpr:
-		return "*" + getFieldTypeName(t.X)
-	case *ast.ArrayType:
-		return "[]" + getFieldTypeName(t.Elt)
-	case *ast.MapType:
-		return fmt.Sprintf("map[%s]%s", getFieldTypeName(t.Key), getFieldTypeName(t.Value))
-	default:
-		return "interface{}"
-	}
-}
-
-func writeGeneratedCode(outputFile, packageName string, methods []string) error {
-	var builder strings.Builder
-
-	// Write file header
-	builder.WriteString("// Code generated by go-config-gen. DO NOT EDIT.\n")
-	builder.WriteString("// This file contains zero reflection validation methods.\n\n")
-	builder.WriteString(fmt.Sprintf("package %s\n\n", packageName))
-
-	// Write imports
-	builder.WriteString("import (\n")
-	builder.WriteString("\t\"regexp\"\n")
-	builder.WriteString("\tgoconfig \"github.com/mateothegreat/go-config\"\n")
-	builder.WriteString(")\n\n")
-
-	// Write regex patterns
-	builder.WriteString("// Pre-compiled regex patterns for validation performance\n")
-	builder.WriteString("var (\n")
-	builder.WriteString("\temailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$`)\n")
-	builder.WriteString("\turlRegex = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9+.-]*://[^\\s]*$`)\n")
-	builder.WriteString("\talphaRegex = regexp.MustCompile(`^[a-zA-Z]+$`)\n")
-	builder.WriteString("\talphaNumRegex = regexp.MustCompile(`^[a-zA-Z0-9]+$`)\n")
-	builder.WriteString("\tnumericRegex = regexp.MustCompile(`^[0-9]+$`)\n")
-	builder.WriteString(")\n\n")
-
-	// Write generated methods
-	for i, method := range methods {
-		if i > 0 {
-			builder.WriteString("\n")
-		}
-		builder.WriteString(method)
-		builder.WriteString("\n")
-	}
-
-	return os.WriteFile(outputFile, []byte(builder.String()), 0o644)
 }

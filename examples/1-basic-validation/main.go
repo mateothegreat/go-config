@@ -91,11 +91,6 @@ func handleValidationError(err error) {
 	// Check if it's a correlated error with suggestions.
 	if correlatedErr, ok := err.(*errors.CorrelatedError); ok {
 		fmt.Printf("Error: %s\n", correlatedErr.Error())
-
-		fmt.Println("\n💡 Suggestions:")
-		for _, suggestion := range correlatedErr.GetSuggestions() {
-			fmt.Printf("  - %s\n", suggestion)
-		}
 		return
 	}
 

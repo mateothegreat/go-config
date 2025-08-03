@@ -11,9 +11,10 @@ import (
 
 // Generator is the main orchestrator for code generation
 type Generator struct {
-	config  GeneratorConfig
-	scanner *scanner.ASTScanner
-	codegen *CodeGenerator
+	config     GeneratorConfig
+	scanner    *scanner.ASTScanner
+	codegen    *CodeGenerator
+	astCodegen *ASTCodeGenerator
 }
 
 // NewGenerator creates a new generator with the given configuration
@@ -26,6 +27,7 @@ func NewGenerator(options ...GeneratorOption) *Generator {
 		Multi:       false,
 		Cache:       false,
 		Verbose:     false,
+		UseAST:      true, // Default to AST-based generation
 	}
 
 	// Apply options
@@ -34,9 +36,10 @@ func NewGenerator(options ...GeneratorOption) *Generator {
 	}
 
 	return &Generator{
-		config:  config,
-		scanner: scanner.NewASTScanner(config.Verbose),
-		codegen: NewCodeGenerator(config),
+		config:     config,
+		scanner:    scanner.NewASTScanner(config.Verbose),
+		codegen:    NewCodeGenerator(config),
+		astCodegen: NewASTCodeGenerator(config),
 	}
 }
 
@@ -158,9 +161,21 @@ func (g *Generator) Generate() error {
 
 // generateSingleFile generates a single validation file with all structs
 func (g *Generator) generateSingleFile(structs []scanner.StructInfo, packageName string) error {
-	content, err := g.codegen.GenerateFileContent(structs, packageName)
-	if err != nil {
-		return fmt.Errorf("failed to generate file content: %w", err)
+	var content string
+	var err error
+
+	if g.config.UseAST {
+		// Use AST-based generation
+		content, err = g.astCodegen.GenerateFile(structs, packageName)
+		if err != nil {
+			return fmt.Errorf("failed to generate file content using AST: %w", err)
+		}
+	} else {
+		// Use template-based generation (deprecated)
+		content, err = g.codegen.GenerateFileContent(structs, packageName)
+		if err != nil {
+			return fmt.Errorf("failed to generate file content: %w", err)
+		}
 	}
 
 	if g.config.DryRun {
@@ -182,6 +197,9 @@ func (g *Generator) generateSingleFile(structs []scanner.StructInfo, packageName
 	if g.config.Verbose {
 		fmt.Printf("✅ Generated validation code written to %s\n", outputPath)
 		fmt.Printf("🎯 %d validation methods created\n", len(structs))
+		if g.config.UseAST {
+			fmt.Printf("⚡ Using high-performance AST-based generation\n")
+		}
 	}
 
 	return nil
@@ -194,12 +212,27 @@ func (g *Generator) generateMultipleFiles(structs []scanner.StructInfo, packageN
 	}
 
 	for _, structInfo := range structs {
-		content, err := g.codegen.GenerateFileContent([]scanner.StructInfo{structInfo}, packageName)
-		if err != nil {
-			if g.config.Verbose {
-				fmt.Printf("❌ Error generating validation for %s: %v\n", structInfo.Name, err)
+		var content string
+		var err error
+
+		if g.config.UseAST {
+			// Use AST-based generation
+			content, err = g.astCodegen.GenerateFile([]scanner.StructInfo{structInfo}, packageName)
+			if err != nil {
+				if g.config.Verbose {
+					fmt.Printf("❌ Error generating validation for %s using AST: %v\n", structInfo.Name, err)
+				}
+				continue
 			}
-			continue
+		} else {
+			// Use template-based generation (deprecated)
+			content, err = g.codegen.GenerateFileContent([]scanner.StructInfo{structInfo}, packageName)
+			if err != nil {
+				if g.config.Verbose {
+					fmt.Printf("❌ Error generating validation for %s: %v\n", structInfo.Name, err)
+				}
+				continue
+			}
 		}
 
 		fileName := fmt.Sprintf("%s_validation_generated.go", strings.ToLower(structInfo.Name))
