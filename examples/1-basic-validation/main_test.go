@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/mateothegreat/go-config/config"
+	"github.com/mateothegreat/go-config/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/validation"
 )
 
 func TestLoadConfigFluentAPI(t *testing.T) {
@@ -129,7 +129,7 @@ func TestValidationWithInvalidConfig(t *testing.T) {
 	assert.Error(t, err)
 
 	// Check if we can get validation errors.
-	if validationErrs, ok := validation.AsValidationErrors(err); ok {
+	if validationErrs, ok := errors.AsValidationErrors(err); ok {
 		errors := validationErrs.Errors()
 		assert.True(t, len(errors) > 0)
 	}

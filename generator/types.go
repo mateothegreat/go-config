@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 
-	"github.com/mateothegreat/go-config/internal/scanner"
+	"github.com/mateothegreat/go-config/scanner"
 )
 
 // GeneratorConfig holds configuration for the code generator

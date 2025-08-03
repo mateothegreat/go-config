@@ -1,8 +1,6 @@
 module github.com/mateothegreat/go-config
 
-go 1.22.0
-
-toolchain go1.24.2
+go 1.24.2
 
 require (
 	github.com/mateothegreat/go-multilog v0.0.0-20250627190626-359729313052
@@ -20,7 +18,9 @@ require (
 	github.com/fatih/color v1.17.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/mateothegreat/go-validation v0.0.0-20250803022724-76d81b3dd8dd // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

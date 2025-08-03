@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mateothegreat/go-config/internal/scanner"
+	"github.com/mateothegreat/go-config/scanner"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -107,7 +107,7 @@ func TestGeneratorEnsureOutputDirError(t *testing.T) {
 
 	// Create a file instead of directory
 	filePath := filepath.Join(tempDir, "notadir")
-	err := os.WriteFile(filePath, []byte("test"), 0644)
+	err := os.WriteFile(filePath, []byte("test"), 0o644)
 	require.NoError(t, err)
 
 	gen := NewGenerator(WithOutputDir(filePath))

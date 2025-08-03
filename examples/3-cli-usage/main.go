@@ -6,9 +6,10 @@ import (
 	"log"
 
 	"github.com/mateothegreat/go-config/config"
+	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/validation"
+	"github.com/mateothegreat/go-config/tmp/validation"
 )
 
 func main() {
@@ -26,7 +27,7 @@ func main() {
 	err := config.LoadWithPlugins(
 		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
 		config.FromEnv(sources.EnvOpts{Prefix: "APP"}),
-	).WithValidationStrategy(validation.StrategyAuto).Build(config1)
+	).Build(config1)
 	if err != nil {
 		fmt.Println("❌ Configuration loading/validation failed!")
 		handleValidationError(err)
@@ -163,7 +164,7 @@ type Config struct {
 // handleValidationError provides comprehensive error handling
 func handleValidationError(err error) {
 	// Check if it's a correlated error with suggestions
-	if correlatedErr, ok := err.(*validation.CorrelatedError); ok {
+	if correlatedErr, ok := err.(*errors.CorrelatedError); ok {
 		fmt.Printf("Error: %s\n", correlatedErr.Error())
 
 		fmt.Println("\n💡 Suggestions:")

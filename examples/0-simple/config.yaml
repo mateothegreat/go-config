@@ -1,12 +1,12 @@
 name: "go-validate-demo"
-environment: "dev"
+environment: dev
 version: "v1.0.0"
 sub:
   foo: "test-value"
 redis:
-  host: "localhost"     # From embedded BaseConfig
-  port: 6379           # From embedded BaseConfig  
-  username: "default"   # From embedded AuthConfig
-  password: "secret"    # From embedded AuthConfig
-  database: 0          # Direct field
-  timeout: "5s"        # Direct field
+  host: "localhost" # From embedded BaseConfig
+  port: 6379 # From embedded BaseConfig
+  username: "default" # From embedded AuthConfig
+  password: "secret" # From embedded AuthConfig
+  database: 0 # Direct field
+  timeout: "5s" # Direct field

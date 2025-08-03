@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mateothegreat/go-config/internal/generator"
+	"github.com/mateothegreat/go-config/generator"
 	"github.com/spf13/cobra"
 )
 

@@ -8,7 +8,7 @@ import (
 
 	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/validation"
+	"github.com/mateothegreat/go-validation"
 	"github.com/sanity-io/litter"
 	"github.com/stretchr/testify/assert"
 )
@@ -51,7 +51,7 @@ func TestConfig(t *testing.T) {
 	err := LoadWithPlugins(
 		FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
 		FromEnv(sources.EnvOpts{Prefix: "SIMPLE"}),
-	).WithValidationStrategy(validation.StrategyAuto).Build(cfg)
+	).Build(cfg)
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
@@ -82,13 +82,13 @@ func TestPointerStructValidation(t *testing.T) {
 		},
 	}
 
-	err := validation.NewUnifiedValidator(validation.DefaultValidatorConfig()).Validate(cfg)
+	err := validation.New().Struct(cfg)
 	assert.Error(t, err, "validation should fail when required pointer struct is nil")
 	assert.Contains(t, err.Error(), "Sub", "error should mention the Sub field")
 
 	// Test case where pointer struct is present and valid
 	cfg.Sub = &SubConfig{Foo: "valid-value"}
-	err = validation.NewUnifiedValidator(validation.DefaultValidatorConfig()).Validate(cfg)
+	err = validation.New().Struct(cfg)
 	assert.NoError(t, err, "validation should pass when pointer struct is properly set")
 }
 
@@ -126,8 +126,8 @@ func TestDefaultValues(t *testing.T) {
 	assert.Equal(t, "10s", cfg.Redis.Timeout, "should use explicit value for Timeout")
 
 	// Test validation with defaults - should pass
-	validator := validation.NewUnifiedValidator(validation.DefaultValidatorConfig())
-	err = validator.Validate(cfg)
+	validator := validation.New()
+	err = validator.Struct(cfg)
 	assert.NoError(t, err, "validation should pass with default values")
 }
 
@@ -146,8 +146,8 @@ func TestDefaultValuesValidation(t *testing.T) {
 	assert.Equal(t, 70000, cfg.Port, "should set the default value")
 
 	// Validation should fail because default value violates constraints
-	validator := validation.NewUnifiedValidator(validation.DefaultValidatorConfig())
-	err = validator.Validate(cfg)
+	validator := validation.New()
+	err = validator.Struct(cfg)
 	assert.Error(t, err, "validation should fail when default value violates constraints")
 	assert.Contains(t, err.Error(), "Port", "error should mention the Port field")
 }
@@ -198,7 +198,7 @@ func TestDefaultValuesWithYAMLLoader(t *testing.T) {
 
 	err := LoadWithPlugins(
 		FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
-	).WithValidationStrategy(validation.StrategyAuto).Build(cfg)
+	).Build(cfg)
 
 	assert.NoError(t, err, "loading should succeed with defaults from YAML")
 

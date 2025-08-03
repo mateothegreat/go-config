@@ -5,15 +5,15 @@ import (
 
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/validation"
 	"github.com/mateothegreat/go-multilog/multilog"
+	"github.com/mateothegreat/go-validation"
 )
 
 // FluentBuilder provides a fluent interface for configuration building
 type FluentBuilder struct {
 	loader        Loader
 	config        LoaderConfig
-	validator     validation.Validator
+	validator     *validation.Validator
 	pluginLoaders []PluginLoader
 }
 
@@ -46,13 +46,7 @@ func (fb *FluentBuilder) WithDefaults(defaults any) Builder {
 
 // WithValidator sets a custom validator
 func (fb *FluentBuilder) WithValidator(validator validation.Validator) Builder {
-	fb.validator = validator
-	return fb
-}
-
-// WithValidationStrategy sets the validation strategy
-func (fb *FluentBuilder) WithValidationStrategy(strategy validation.Strategy) Builder {
-	fb.config.ValidationStrategy = strategy
+	fb.validator = &validator
 	return fb
 }
 
@@ -71,7 +65,7 @@ func (fb *FluentBuilder) Build(target any) error {
 
 	// Set validator if provided
 	if fb.validator != nil {
-		fb.loader.SetValidator(fb.validator)
+		fb.loader.SetValidator(*fb.validator)
 	}
 	// Note: If no validator is set, the loader will auto-detect the appropriate validator
 
@@ -108,7 +102,7 @@ type PluginBuilder struct {
 	pluginLoaders []PluginLoader
 	config        LoaderConfig
 	defaults      any
-	validator     validation.Validator
+	validator     *validation.Validator
 }
 
 // LoadWithPlugins creates a new config builder that accepts plugin constructor functions
@@ -127,20 +121,14 @@ func (pb *PluginBuilder) WithDefaults(def any) *PluginBuilder {
 
 // WithValidator sets the validator for the config
 func (pb *PluginBuilder) WithValidator(v validation.Validator) *PluginBuilder {
-	pb.validator = v
-	return pb
-}
-
-// WithValidationStrategy sets the validation strategy
-func (pb *PluginBuilder) WithValidationStrategy(strategy validation.Strategy) *PluginBuilder {
-	pb.config.ValidationStrategy = strategy
+	pb.validator = &v
 	return pb
 }
 
 // WithStructValidator sets up struct tag-based validation with optional custom validators
-func (pb *PluginBuilder) WithStructValidator(customValidators ...func(*validation.UnifiedValidator)) *PluginBuilder {
+func (pb *PluginBuilder) WithStructValidator(customValidators ...func(*validation.Validator)) *PluginBuilder {
 	config := validation.DefaultValidatorConfig()
-	validator := validation.NewUnifiedValidator(config)
+	validator := validation.NewWithConfig(config)
 	for _, fn := range customValidators {
 		fn(validator)
 	}
@@ -163,29 +151,26 @@ func (pb *PluginBuilder) Build(target any) error {
 		"validator": pb.validator,
 	})
 
-	// Auto-detect validation strategy if no validator is set
-	if pb.validator == nil {
-		detector := validation.NewValidationDetector(validation.ValidatorConfig{
-			Strategy: pb.config.ValidationStrategy,
-		})
+	// // Auto-detect validation strategy if no validator is set
+	// if pb.validator == nil {
+	// 	detector := validation.New()
 
-		info := detector.GetValidationInfo(target)
+	// 	info := detector.Struct(target)
 
-		if info.HasGeneratedCode {
-			// Use generated validation - let the loader handle this automatically
-			// The loader will auto-detect and create the appropriate adapter
-			pb.validator = nil
-		} else {
-			// Use unified validator with auto-detection
-			validatorConfig := validation.DefaultValidatorConfig()
-			validatorConfig.Strategy = pb.config.ValidationStrategy
-			pb.validator = validation.NewUnifiedValidator(validatorConfig)
-		}
-	}
+	// 	if info.HasGeneratedCode {
+	// 		// Use generated validation - let the loader handle this automatically
+	// 		// The loader will auto-detect and create the appropriate adapter
+	// 		pb.validator = nil
+	// 	} else {
+	// 		// Use unified validator with auto-detection
+	// 		validatorConfig := validation.DefaultValidatorConfig()
+	// 		pb.validator = validation.NewWithConfig(validatorConfig)
+	// 	}
+	// }
 
-	if pb.validator != nil {
-		loader.SetValidator(pb.validator)
-	}
+	// if pb.validator != nil {
+	// 	loader.SetValidator(*pb.validator)
+	// }
 	// If pb.validator is nil, let the loader auto-detect the appropriate validator
 
 	// Add all plugins
@@ -231,7 +216,7 @@ type BuilderSource struct {
 type BuilderConfig struct {
 	sources   []BuilderSource
 	defaults  any
-	validator validation.Validator
+	validator *validation.Validator
 }
 
 // Source creates a new source builder (legacy)
@@ -252,7 +237,7 @@ func (cb *BuilderConfig) WithDefaults(def any) *BuilderConfig {
 
 // WithValidator sets the validator for the config (legacy)
 func (cb *BuilderConfig) WithValidator(v validation.Validator) *BuilderConfig {
-	cb.validator = v
+	cb.validator = &v
 	return cb
 }
 
@@ -265,7 +250,7 @@ func (cb *BuilderConfig) Build(target any) error {
 	}
 
 	if cb.validator != nil {
-		loader.SetValidator(cb.validator)
+		loader.SetValidator(*cb.validator)
 	}
 
 	// Convert legacy sources to plugins

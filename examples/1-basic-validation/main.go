@@ -6,9 +6,9 @@ import (
 	"log"
 
 	"github.com/mateothegreat/go-config/config"
+	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/validation"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 	err := config.LoadWithPlugins(
 		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
 		config.FromEnv(sources.EnvOpts{Prefix: "SERVER"}),
-	).WithValidationStrategy(validation.StrategyAuto).Build(config1)
+	).Build(config1)
 	if err != nil {
 		fmt.Println("❌ Validation failed!")
 		handleValidationError(err)
@@ -89,7 +89,7 @@ func main() {
 // handleValidationError provides detailed error handling.
 func handleValidationError(err error) {
 	// Check if it's a correlated error with suggestions.
-	if correlatedErr, ok := err.(*validation.CorrelatedError); ok {
+	if correlatedErr, ok := err.(*errors.CorrelatedError); ok {
 		fmt.Printf("Error: %s\n", correlatedErr.Error())
 
 		fmt.Println("\n💡 Suggestions:")
@@ -100,7 +100,7 @@ func handleValidationError(err error) {
 	}
 
 	// Check if it's validation errors.
-	if validationErrs, ok := validation.AsValidationErrors(err); ok {
+	if validationErrs, ok := errors.AsValidationErrors(err); ok {
 		fmt.Println("Validation errors found:")
 		for _, validationErr := range validationErrs.Errors() {
 			fmt.Printf("  - %s\n", validationErr.Error())

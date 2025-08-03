@@ -7,7 +7,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/mateothegreat/go-config/internal/scanner"
+	"github.com/mateothegreat/go-config/scanner"
 )
 
 // CodeGenerator handles generating zero-reflection validation code
@@ -347,7 +347,7 @@ func (cg *CodeGenerator) extractImports(structs []scanner.StructInfo) []string {
 	importSet["fmt"] = true
 	importSet["regexp"] = true
 	importSet["github.com/mateothegreat/go-config"] = true
-	importSet["github.com/mateothegreat/go-config/validation"] = true
+	importSet["github.com/mateothegreat/go-validation"] = true
 
 	// Check if reflect is needed
 	for _, structInfo := range structs {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins"
-	"github.com/mateothegreat/go-config/validation"
+	"github.com/mateothegreat/go-validation"
 )
 
 // Loader provides the main interface for configuration loading
@@ -33,8 +33,6 @@ type Builder interface {
 	WithDefaults(defaults any) Builder
 	// WithValidator sets a custom validator
 	WithValidator(validator validation.Validator) Builder
-	// WithValidationStrategy sets the validation strategy
-	WithValidationStrategy(strategy validation.Strategy) Builder
 	// Build loads configuration into the target struct
 	Build(target any) error
 }
@@ -54,7 +52,6 @@ const (
 // LoaderConfig configures loader behavior
 type LoaderConfig struct {
 	HydrationStrategy     HydrationStrategy
-	ValidationStrategy    validation.Strategy
 	FailOnSourceError     bool
 	FailOnValidationError bool
 	AllowUnknownFields    bool
@@ -65,7 +62,6 @@ type LoaderConfig struct {
 func DefaultLoaderConfig() LoaderConfig {
 	return LoaderConfig{
 		HydrationStrategy:     HydrationAuto,
-		ValidationStrategy:    validation.StrategyAuto,
 		FailOnSourceError:     true,
 		FailOnValidationError: true,
 		AllowUnknownFields:    true,

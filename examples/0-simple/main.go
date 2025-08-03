@@ -6,7 +6,6 @@ import (
 	"github.com/mateothegreat/go-config/config"
 	"github.com/mateothegreat/go-config/plugins/sources"
 	"github.com/mateothegreat/go-config/test"
-	"github.com/mateothegreat/go-config/validation"
 	"github.com/sanity-io/litter"
 )
 
@@ -22,7 +21,7 @@ func main() {
 	err := config.LoadWithPlugins(
 		config.FromYAML(sources.YAMLOpts{Path: "config.yaml"}),
 		config.FromEnv(sources.EnvOpts{Prefix: "SIMPLE"}),
-	).WithValidationStrategy(validation.StrategyAuto).Build(cfg)
+	).Build(cfg)
 	if err != nil {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}

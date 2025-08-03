@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mateothegreat/go-config/internal/scanner"
+	"github.com/mateothegreat/go-config/scanner"
 )
 
 // Generator is the main orchestrator for code generation
@@ -175,7 +175,7 @@ func (g *Generator) generateSingleFile(structs []scanner.StructInfo, packageName
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
+	if err := os.WriteFile(outputPath, []byte(content), 0o644); err != nil {
 		return fmt.Errorf("failed to write output file: %w", err)
 	}
 
@@ -211,7 +211,7 @@ func (g *Generator) generateMultipleFiles(structs []scanner.StructInfo, packageN
 			continue
 		}
 
-		if err := os.WriteFile(outputPath, []byte(content), 0644); err != nil {
+		if err := os.WriteFile(outputPath, []byte(content), 0o644); err != nil {
 			if g.config.Verbose {
 				fmt.Printf("❌ Error writing file for %s: %v\n", structInfo.Name, err)
 			}
@@ -265,7 +265,7 @@ func (g *Generator) ensureOutputDir() error {
 
 	info, err := os.Stat(g.config.OutputDir)
 	if os.IsNotExist(err) {
-		return os.MkdirAll(g.config.OutputDir, 0755)
+		return os.MkdirAll(g.config.OutputDir, 0o755)
 	}
 
 	if err != nil {
