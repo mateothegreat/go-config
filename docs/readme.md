@@ -4,13 +4,13 @@
 
 ## Features
 
-- 🏗️ **Well-architected design** with clear separation of concerns
-- ⚡ **Multiple validation strategies** - Auto-detection, Generated, Reflection, and Fast validation
-- 🔗 **Unified plugin system** for configuration sources (YAML, Environment variables, etc.)
-- 🎯 **Advanced error correlation** with contextual suggestions
-- 📝 **Fluent API** for both configuration loading and validation
-- 🚀 **Zero-reflection code generation** for high-performance validation
-- 💡 **Intelligent field mapping** with automatic tag detection
+- 🏗️ **Well-architected design** with clear separation of concerns.
+- ⚡ **Multiple validation strategies** - Auto-detection, Generated, Reflection, and Fast validation.
+- 🔗 **Unified plugin system** for configuration sources (YAML, Environment variables, etc.).
+- 🎯 **Advanced error correlation** with contextual suggestions.
+- 📝 **Fluent API** for both configuration loading and validation.
+- 🚀 **Zero-reflection code generation** for high-performance validation.
+- 💡 **Intelligent field mapping** with automatic tag detection.
 
 ## Quick Start
 
@@ -89,9 +89,11 @@ func main() {
 
 See the [`examples/`](../examples) directory for complete working examples:
 
-- [`1-basic-validation/`](../examples/1-basic-validation) - Basic configuration loading and validation
-- [`2-embedded-generation/`](../examples/2-embedded-generation) - Code generation with nested structs
-- [`3-cli-usage/`](../examples/3-cli-usage) - Command-line integration
+- [`1-basic-validation/`](../examples/1-basic-validation) - Basic configuration loading and validation.
+- [`2-embedded-generation/`](../examples/2-embedded-generation) - Code generation with nested structs.
+- [`3-cli-usage/`](../examples/3-cli-usage) - Command-line integration.
+- [`4-ast-validation/`](../examples/4-ast-validation) - AST validation with custom error messages and validation groups.
+- [`5-optimized-validation/`](../examples/5-optimized-validation) - Optimized validation with bit-field error tracking.
 
 ## Validation Strategies
 

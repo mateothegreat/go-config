@@ -3,6 +3,8 @@ package main
 import (
 	"strings"
 	"testing"
+
+	"github.com/mateothegreat/go-validation"
 )
 
 func TestServerConfigValidation(t *testing.T) {
@@ -108,7 +110,7 @@ func TestServerConfigValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.config.Validate()
+			err := validation.Struct(tt.config)
 
 			if tt.wantError {
 				if err == nil {
@@ -202,7 +204,7 @@ func TestDatabaseConfigValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test DatabaseConfig validation directly
-			err := tt.config.Validate()
+			err := validation.Struct(tt.config)
 
 			if tt.wantError {
 				if err == nil {
@@ -338,7 +340,7 @@ func BenchmarkValidation(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_ = config.Validate()
+		_ = validation.Struct(config)
 	}
 }
 
@@ -352,6 +354,6 @@ func BenchmarkValidationWithErrors(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_ = config.Validate()
+		_ = validation.Struct(config)
 	}
 }

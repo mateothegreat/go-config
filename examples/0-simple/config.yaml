@@ -6,6 +6,7 @@ sub:
 redis:
   host: "localhost" # From embedded BaseConfig
   port: 6379 # From embedded BaseConfig
+  default: "default" # From embedded BaseConfig
   username: "default" # From embedded AuthConfig
   password: "secret" # From embedded AuthConfig
   database: 0 # Direct field

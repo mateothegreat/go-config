@@ -9,7 +9,8 @@ import (
 	"github.com/mateothegreat/go-config/errors"
 	"github.com/mateothegreat/go-config/plugins"
 	"github.com/mateothegreat/go-config/plugins/sources"
-	"github.com/mateothegreat/go-config/tmp/validation"
+	"github.com/mateothegreat/go-validation"
+	"github.com/mateothegreat/go-validation/validators"
 )
 
 func main() {
@@ -83,7 +84,7 @@ func main() {
 	fmt.Println("🔍 Testing validation strategies...")
 
 	// Check server config validation
-	if validation.HasGeneratedValidator(&config2.Server) {
+	if validators.(&config2.Server) {
 		fmt.Println("✅ ServerConfig: Using generated validation")
 		if err := validation.ValidateWithGenerated(&config2.Server); err != nil {
 			fmt.Printf("❌ Server validation failed: %v\n", err)
