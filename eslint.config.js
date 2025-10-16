@@ -1,1 +1,0 @@
-/Users/matthewdavis/workspace/svelte-repl/common/eslint.config.js
