@@ -24,6 +24,6 @@
   },
   "homepage": "https://github.com/mateothegreat/go-config#readme",
   "dependencies": {
-    "svelte": "^5.38.1"
+    "svelte": "^5.51.5"
   }
 }
